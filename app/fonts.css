@@ -1,0 +1,12 @@
+/* @font-face {
+  font-family: "Geliat";
+  src: url("/fonts/Geliat-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+} */
+
+.font-geliat {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+}
