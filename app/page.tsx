@@ -23,7 +23,6 @@ import ContactModal from "@/components/contact-modal"
 import AudioPlayerModal from "@/components/audio-player-modal"
 
 // Lazy load heavy components
-// Chatbot removed - using direct audio player instead
 
 // Loading component
 const LoadingSpinner = () => (
@@ -63,7 +62,6 @@ export default function Page() {
   const [storyModalOpen, setStoryModalOpen] = useState(false)
   const [newsModalOpen, setNewsModalOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null)
-  // const [storyToRead, setStoryToRead] = useState<string>("") // Removed - no longer using chatbot
   const [selectedStory, setSelectedStory] = useState<StoryContent | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [shareContent, setShareContent] = useState({ title: "", url: "", description: "" })
@@ -903,7 +901,6 @@ THE END`
       {/* Lazy loaded components */}
       {mounted && (
         <>
-          <Chatbot storyToRead={storyToRead} />
           <ContactModal isOpen={contactModalOpen} onClose={() => setContactModalOpen(false)} />
           {currentAudio && (
             <AudioPlayerModal
