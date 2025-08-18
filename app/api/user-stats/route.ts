@@ -97,22 +97,31 @@ export async function GET(request: NextRequest) {
 
     // Add likes to activity
     recentActivity.data?.forEach(like => {
-      if (like.blog_posts) {
+      const blogPost = Array.isArray(like.blog_posts) ? like.blog_posts[0] : like.blog_posts
+      
+      if (blogPost) {
         activities.push({
           type: 'like',
           timestamp: like.created_at,
-          title: like.blog_posts.title,
-          slug: like.blog_posts.slug,
-          description: `Liked "${like.blog_posts.title}"`
+          title: blogPost.title,
+          slug: blogPost.slug,
+          description: `Liked "${blogPost.title}"`
         })
-      } else if (like.comments?.blog_posts) {
-        activities.push({
-          type: 'like_comment',
-          timestamp: like.created_at,
-          title: like.comments.blog_posts.title,
-          slug: like.comments.blog_posts.slug,
-          description: `Liked a comment on "${like.comments.blog_posts.title}"`
-        })
+      } else if (like.comments) {
+        const comment = Array.isArray(like.comments) ? like.comments[0] : like.comments
+        const commentBlogPost = Array.isArray(comment?.blog_posts) 
+          ? comment.blog_posts[0] 
+          : comment?.blog_posts
+          
+        if (commentBlogPost) {
+          activities.push({
+            type: 'like_comment',
+            timestamp: like.created_at,
+            title: commentBlogPost.title,
+            slug: commentBlogPost.slug,
+            description: `Liked a comment on "${commentBlogPost.title}"`
+          })
+        }
       }
     })
 
