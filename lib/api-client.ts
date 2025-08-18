@@ -1,9 +1,17 @@
+import { supabase } from './supabase'
+
 // Utility for making authenticated API requests from client-side
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
+  // Get current session token for authorization
+  const { data: { session } } = await supabase.auth.getSession()
+  
   const defaultOptions: RequestInit = {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...(session?.access_token ? { 
+        'authorization': `Bearer ${session.access_token}` 
+      } : {}),
       ...options.headers,
     },
     ...options,

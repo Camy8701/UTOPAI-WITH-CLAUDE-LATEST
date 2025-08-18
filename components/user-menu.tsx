@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from './auth-provider'
 import { AuthModal } from './auth-modal'
@@ -19,10 +19,20 @@ export function UserMenu() {
   const { user, profile, signOut, loading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
+  const [forceRender, setForceRender] = useState(0)
   const router = useRouter()
   
   // Admin check
   const isAdmin = user?.email === 'utopaiblog@gmail.com'
+  
+  // Force re-render every 30 seconds to prevent frozen state
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setForceRender(prev => prev + 1)
+    }, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
 
   // Navigation handler
@@ -127,7 +137,7 @@ export function UserMenu() {
   // Authenticated user - show dropdown
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu key={user.id}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"

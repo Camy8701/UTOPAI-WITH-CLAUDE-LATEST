@@ -36,9 +36,10 @@ interface Comment {
 interface StoryInteractionsProps {
   postId: string
   initialLikeCount?: number
+  title?: string
 }
 
-export function StoryInteractions({ postId, initialLikeCount = 0 }: StoryInteractionsProps) {
+export function StoryInteractions({ postId, initialLikeCount = 0, title = "Story" }: StoryInteractionsProps) {
   const { user, loading } = useAuth()
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
@@ -165,7 +166,7 @@ export function StoryInteractions({ postId, initialLikeCount = 0 }: StoryInterac
       <div className="mb-8">
         <StoryActionButtons
           postId={postId}
-          title={document.title || 'Story'}
+          title={title}
           description="Read this amazing story"
           initialLikeCount={initialLikeCount}
           commentCount={comments.length}

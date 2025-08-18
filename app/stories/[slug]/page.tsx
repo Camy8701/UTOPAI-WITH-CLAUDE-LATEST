@@ -188,6 +188,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <StoryInteractions 
               postId={story.id} 
               initialLikeCount={story.like_count || 0}
+              title={story.title}
             />
 
             <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
