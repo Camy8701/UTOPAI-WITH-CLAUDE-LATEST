@@ -4,19 +4,19 @@ A modern AI-focused blog platform built with Next.js, featuring AI stories, news
 
 ## Features
 
-- 🤖 AI-generated stories and content
-- 📰 Latest AI news and updates
-- 🎯 Interactive quizzes and activities
-- 📱 Responsive design with dark mode
-- 🔐 Admin dashboard for content management
-- 🎨 Modern UI with Tailwind CSS and shadcn/ui
+🤖 AI-generated stories and content  
+📰 Latest AI news and updates  
+🎯 Interactive quizzes and activities  
+📱 Responsive design with dark mode  
+🔐 Admin dashboard for content management  
+🎨 Modern UI with Tailwind CSS and shadcn/ui
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15.2.4 with App Router
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **Database**: Supabase (PostgreSQL)
-- **Authentication**: NextAuth.js with Google OAuth
+- **Authentication**: Supabase Auth with Google OAuth
 - **Deployment**: Vercel
 - **Language**: TypeScript
 
@@ -49,19 +49,11 @@ cp .env.example .env.local
 
 Fill in your environment variables:
 \`\`\`env
-# Supabase
+# Supabase (Required)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Google OAuth
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-# NextAuth
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret
-
-# ElevenLabs (for text-to-speech)
+# ElevenLabs (Optional - for text-to-speech)
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
 \`\`\`
 
@@ -70,7 +62,7 @@ ELEVENLABS_API_KEY=your_elevenlabs_api_key
 npm run dev
 \`\`\`
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 ## Project Structure
 
@@ -80,12 +72,12 @@ npm run dev
 │   ├── ai-stories/        # AI stories section
 │   ├── news/              # News section
 │   ├── collections/       # Content collections
+│   ├── quiz/              # Interactive quizzes
 │   └── api/               # API routes
 ├── components/            # Reusable components
 │   ├── ui/                # shadcn/ui components
 │   └── ...                # Custom components
-├── lib/                   # Utility functions
-├── hooks/                 # Custom React hooks
+├── lib/                   # Utility functions and Supabase clients
 ├── types/                 # TypeScript type definitions
 └── public/                # Static assets
 \`\`\`
@@ -96,6 +88,7 @@ npm run dev
 - Interactive AI-generated narratives
 - Story categories and collections
 - Reading progress tracking
+- Like, comment, and save functionality
 
 ### News Section
 - Latest AI industry news
@@ -124,17 +117,22 @@ npm run dev
 ### Database Schema
 
 The application uses Supabase with the following main tables:
-- `posts` - Blog posts and articles
-- `users` - User profiles and authentication
+- `blog_posts` - Blog posts and articles
+- `profiles` - User profiles and authentication
+- `comments` - User comments on posts
+- `likes` - User likes on posts and comments
+- `saved_posts` - User saved posts
 - `activities` - User activity tracking
-- `media` - File uploads and media management
 
 ### API Routes
 
-- `/api/auth/*` - NextAuth.js authentication
-- `/api/posts/*` - Post management
-- `/api/users/*` - User management
-- `/api/media/*` - Media upload and management
+- `/api/auth/*` - Supabase authentication
+- `/api/blog-posts/*` - Post management
+- `/api/comments/*` - Comment management
+- `/api/likes/*` - Like functionality
+- `/api/saved-posts/*` - Saved posts management
+- `/api/quiz/*` - Quiz functionality
+- `/api/user-stats/*` - User statistics
 
 ## Deployment
 
