@@ -4,10 +4,10 @@ import { createAPIClient } from '@/lib/supabase-client-server'
 // GET /api/comments/[id] - Get a specific comment
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const commentId = params.id
+    const { id: commentId } = await params
 
     if (!commentId) {
       return NextResponse.json(
@@ -64,10 +64,10 @@ export async function GET(
 // PUT /api/comments/[id] - Update a comment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const commentId = params.id
+    const { id: commentId } = await params
     const body = await request.json()
     const { content } = body
 
@@ -169,8 +169,12 @@ export async function PUT(
 
     const responseComment = {
       ...updatedComment,
-      author_name: updatedComment.profiles?.full_name || 'Anonymous',
-      author_avatar: updatedComment.profiles?.avatar_url || null
+      author_name: Array.isArray(updatedComment.profiles) 
+        ? updatedComment.profiles[0]?.full_name || 'Anonymous'
+        : (updatedComment.profiles as any)?.full_name || 'Anonymous',
+      author_avatar: Array.isArray(updatedComment.profiles)
+        ? updatedComment.profiles[0]?.avatar_url || null
+        : (updatedComment.profiles as any)?.avatar_url || null
     }
 
     return NextResponse.json({
@@ -190,10 +194,10 @@ export async function PUT(
 // DELETE /api/comments/[id] - Delete a comment
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const commentId = params.id
+    const { id: commentId } = await params
 
     if (!commentId) {
       return NextResponse.json(

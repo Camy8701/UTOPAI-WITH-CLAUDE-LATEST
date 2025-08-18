@@ -8,9 +8,20 @@ type BlogPostUpdate = Database['public']['Tables']['blog_posts']['Update']
 
 async function createSupabaseServer() {
   const cookieStore = await cookies()
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl) {
+    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+  }
+  if (!supabaseAnonKey) {
+    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  }
+  
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -30,11 +41,11 @@ async function createSupabaseServer() {
 // GET /api/blog-posts/[id] - Get a single blog post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createSupabaseServer()
-    const { id } = params
+    const { id } = await params
 
     const { data, error } = await supabase
       .from('blog_posts')
@@ -85,11 +96,11 @@ export async function GET(
 // PUT /api/blog-posts/[id] - Update a blog post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createSupabaseServer()
-    const { id } = params
+    const { id } = await params
     
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -173,11 +184,11 @@ export async function PUT(
 // DELETE /api/blog-posts/[id] - Delete a blog post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createSupabaseServer()
-    const { id } = params
+    const { id } = await params
     
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -1375,10 +1375,18 @@ const getUserRank = (score: number): number => {
 /*                                Page Component                              */
 /* -------------------------------------------------------------------------- */
 
-export default function QuizPage({ params }: { params: { id: string } }) {
+export default function QuizPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { user } = useAuth()
-  const quiz = quizData[params.id]
+  
+  // Extract the id from params
+  const [quizId, setQuizId] = useState<string | null>(null)
+  
+  useEffect(() => {
+    params.then(({ id }) => setQuizId(id))
+  }, [params])
+  
+  const quiz = quizId ? quizData[quizId] : null
 
   // Generate 10 random questions from the 40 available
   const allQuestions = quiz?.questions ?? []
@@ -1464,7 +1472,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
       if (user) {
         // User is authenticated - save to database
         const submission = {
-          quizType: params.id, // Use the URL parameter as quiz type
+          quizType: quizId || 'unknown', // Use the URL parameter as quiz type
           score: points,
           percentage,
           timeTaken: (totalQuestions * 10) - timeLeft, // Approximate time taken

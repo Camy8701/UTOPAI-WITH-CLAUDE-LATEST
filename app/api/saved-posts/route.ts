@@ -58,15 +58,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Format the response
-    const formattedPosts = savedPosts?.map(savedPost => ({
-      id: savedPost.id,
-      saved_at: savedPost.created_at,
-      post: {
-        ...savedPost.blog_posts,
-        author_name: savedPost.blog_posts?.profiles?.full_name || 'Anonymous',
-        author_avatar: savedPost.blog_posts?.profiles?.avatar_url || null
+    const formattedPosts = savedPosts?.map(savedPost => {
+      const blogPost = Array.isArray(savedPost.blog_posts) 
+        ? savedPost.blog_posts[0] 
+        : savedPost.blog_posts
+      
+      return {
+        id: savedPost.id,
+        saved_at: savedPost.created_at,
+        post: {
+          ...blogPost,
+          author_name: Array.isArray(blogPost?.profiles)
+            ? blogPost.profiles[0]?.full_name || 'Anonymous'
+            : (blogPost?.profiles as any)?.full_name || 'Anonymous',
+          author_avatar: Array.isArray(blogPost?.profiles)
+            ? blogPost.profiles[0]?.avatar_url || null
+            : (blogPost?.profiles as any)?.avatar_url || null
+        }
       }
-    })) || []
+    }) || []
 
     return NextResponse.json({
       saved_posts: formattedPosts,
