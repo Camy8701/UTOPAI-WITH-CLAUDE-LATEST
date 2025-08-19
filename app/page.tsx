@@ -430,16 +430,16 @@ THE END`
                 </div>
               ) : (
                 <StaggeredGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" delay={0.2}>
-                  {featuredStories.map((post, i) => (
+                  {(featuredStories.length > 0 ? featuredStories : featuredCollections).map((post, i) => (
                     <PremiumCard
-                      key={post.id}
+                      key={post.id || `static-${i}`}
                       variant="story"
                       className="group cursor-pointer overflow-hidden h-[650px] flex flex-col"
                     >
                       {/* Image section */}
                       <div className="relative overflow-hidden w-full h-64" style={{ aspectRatio: "3/2" }}>
                         <Image
-                          src={post.thumbnail_url || "/placeholder.svg"}
+                          src={post.thumbnail_url || post.image || "/placeholder.svg"}
                           alt={post.title}
                           width={600}
                           height={400}
@@ -451,11 +451,11 @@ THE END`
                         {/* Category badge */}
                         <div className="absolute top-4 left-4">
                           <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                            {post.category}
+                            {post.category || 'AI Fiction'}
                           </span>
                         </div>
                         
-                        {post.featured && (
+                        {(post.featured || !post.id) && (
                           <div className="absolute top-4 right-4">
                             <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                               ⭐ Featured
@@ -468,11 +468,11 @@ THE END`
                       <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                            {post.read_time && (
+                            <span>{post.created_at ? new Date(post.created_at).toLocaleDateString() : post.date}</span>
+                            {(post.read_time || post.hasStory) && (
                               <>
                                 <span>•</span>
-                                <span>{post.read_time}</span>
+                                <span>{post.read_time || '15 min read'}</span>
                               </>
                             )}
                           </div>
@@ -480,7 +480,7 @@ THE END`
                             {post.title}
                           </h3>
                           <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
-                            {post.excerpt}
+                            {post.excerpt || post.description}
                           </p>
                           
                           {/* Stats */}
@@ -498,8 +498,16 @@ THE END`
                             whileTap={{ scale: 0.95 }}
                             transition={{ duration: 0.2 }}
                             onClick={() => {
-                              // Navigate to post or open modal
-                              window.open(`/stories/${post.slug}`, '_blank')
+                              // Navigate to post or open modal - handle both database posts and static content
+                              if (post.slug) {
+                                window.open(`/stories/${post.slug}`, '_blank')
+                              } else if (post.title === "NEURALINK 15MIN") {
+                                window.open('/stories/neuralink-15min-elena-marole', '_blank')
+                              } else {
+                                // For static content, show modal or create dynamic story page
+                                setSelectedStory(post)
+                                setStoryModalOpen(true)
+                              }
                             }}
                           >
                             Read
@@ -534,10 +542,10 @@ THE END`
 
                           {/* Story Action Buttons - Like, Comment, Share, Save */}
                           <StoryActionButtons
-                            postId={post.id}
-                            slug={post.slug}
+                            postId={post.id || `static-${i}`}
+                            slug={post.slug || post.title?.toLowerCase().replace(/\s+/g, '-')}
                             title={post.title}
-                            description={post.excerpt || ''}
+                            description={post.excerpt || post.description || ''}
                             initialLikeCount={post.like_count || 0}
                             commentCount={post.comment_count || 0}
                             size="sm"
