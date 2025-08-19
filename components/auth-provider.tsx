@@ -176,10 +176,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      const isProduction = window.location.hostname === 'www.utopai.blog'
+      const redirectTo = isProduction 
+        ? 'https://www.utopai.blog/auth/callback'
+        : `${window.location.origin}/auth/callback`
+
+      console.log('Starting Google OAuth with redirect:', redirectTo)
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -189,8 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Supabase OAuth error:', error)
-        throw error
+        throw new Error(`OAuth failed: ${error.message}`)
       }
+      
+      console.log('OAuth initiated successfully')
     } catch (error) {
       console.error('Error signing in with Google:', error)
       throw error
@@ -199,6 +208,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
+      console.log('Attempting email sign-in for:', email)
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -206,8 +217,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Email sign-in error:', error)
-        throw error
+        
+        // Provide more user-friendly error messages
+        if (error.message === 'Invalid login credentials') {
+          throw new Error('Invalid email or password. Please check your credentials and try again.')
+        } else if (error.message === 'Email not confirmed') {
+          throw new Error('Please check your email and confirm your account before signing in.')
+        } else {
+          throw new Error(error.message)
+        }
       }
+      
+      console.log('Email sign-in successful')
     } catch (error) {
       console.error('Error signing in with email:', error)
       throw error
@@ -216,6 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpWithEmail = async (email: string, password: string, fullName?: string) => {
     try {
+      console.log('Attempting email sign-up for:', email)
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -223,6 +246,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName || '',
           },
+          emailRedirectTo: window.location.hostname === 'www.utopai.blog'
+            ? 'https://www.utopai.blog/auth/callback'
+            : `${window.location.origin}/auth/callback`
         },
       })
       
