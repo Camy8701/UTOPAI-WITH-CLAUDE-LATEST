@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Initialize Resend lazily to avoid build-time errors
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY environment variable is not set')
+  }
+  return new Resend(apiKey)
+}
 
 interface ContactFormData {
   name: string
@@ -12,6 +19,14 @@ interface ContactFormData {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Resend is configured
+    if (!process.env.RESEND_API_KEY) {
+      return NextResponse.json(
+        { error: 'Email service is not configured' },
+        { status: 503 }
+      )
+    }
+
     const body: ContactFormData = await request.json()
     const { name, email, reason, message } = body
 
@@ -92,6 +107,9 @@ export async function POST(request: NextRequest) {
       This email was sent from the utopai.blog contact form.
       Reply directly to this email to respond to ${name}.
     `
+
+    // Initialize Resend client
+    const resend = getResendClient()
 
     // Send email to admin
     const { data: emailResult, error: emailError } = await resend.emails.send({
