@@ -57,7 +57,16 @@ async function getStory(slug: string): Promise<BlogPost & { like_count?: number 
     .select('*', { count: 'exact', head: true })
     .eq('post_id', data.id)
 
-  return { ...data, like_count: likeCount || 0 }
+  // Fix profiles type issue - database returns array but type expects single object
+  const fixedData = {
+    ...data,
+    profiles: Array.isArray(data.profiles) && data.profiles.length > 0 
+      ? data.profiles[0] 
+      : null,
+    like_count: likeCount || 0
+  }
+  
+  return fixedData
 }
 
 // Generate metadata for the page

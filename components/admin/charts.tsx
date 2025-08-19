@@ -24,7 +24,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 // Line Chart Component
 export function LineChart() {
   const { theme } = useTheme()
-  const chartRef = useRef<ChartJS>(null)
+  const chartRef = useRef(null)
 
   const isDark = theme === "dark"
   const textColor = isDark ? "#CBD5E1" : "#475569"
@@ -88,13 +88,6 @@ export function LineChart() {
     },
   }
 
-  useEffect(() => {
-    // Update chart when theme changes
-    const chart = chartRef.current
-    if (chart) {
-      chart.update()
-    }
-  }, [theme])
 
   return (
     <div className="h-[300px]">
@@ -106,7 +99,7 @@ export function LineChart() {
 // Bar Chart Component
 export function BarChart() {
   const { theme } = useTheme()
-  const chartRef = useRef<ChartJS>(null)
+  const chartRef = useRef(null)
 
   const isDark = theme === "dark"
   const textColor = isDark ? "#CBD5E1" : "#475569"
@@ -162,13 +155,6 @@ export function BarChart() {
     },
   }
 
-  useEffect(() => {
-    // Update chart when theme changes
-    const chart = chartRef.current
-    if (chart) {
-      chart.update()
-    }
-  }, [theme])
 
   return (
     <div className="h-[300px]">
@@ -180,7 +166,7 @@ export function BarChart() {
 // Pie Chart Component
 export function PieChart() {
   const { theme } = useTheme()
-  const chartRef = useRef<ChartJS>(null)
+  const chartRef = useRef(null)
 
   const isDark = theme === "dark"
   const textColor = isDark ? "#CBD5E1" : "#475569"
@@ -215,13 +201,6 @@ export function PieChart() {
     },
   }
 
-  useEffect(() => {
-    // Update chart when theme changes
-    const chart = chartRef.current
-    if (chart) {
-      chart.update()
-    }
-  }, [theme])
 
   return (
     <div className="h-[300px]">

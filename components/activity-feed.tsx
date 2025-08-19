@@ -6,7 +6,9 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Heart, Bookmark, Share2, BookOpen, User, LogIn, UserPlus, Clock, Filter, ChevronDown } from "lucide-react"
 import Image from "next/image"
-import { useActivity, type Activity, type ActivityType } from "./activity-context"
+import { useActivity, type Activity } from "./activity-context"
+
+type ActivityType = Activity['type']
 
 const activityIcons: Record<ActivityType, React.ComponentType<any>> = {
   story_liked: Heart,

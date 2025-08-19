@@ -8,41 +8,29 @@ import { formatDistanceToNow } from "date-fns"
 
 const getActivityIcon = (type: Activity["type"]) => {
   switch (type) {
-    case "liked":
+    case "story_liked":
       return <Heart className="h-5 w-5 text-red-500" />
-    case "saved":
+    case "story_unliked":
+      return <Heart className="h-5 w-5 text-gray-400" />
+    case "story_saved":
       return <Bookmark className="h-5 w-5 text-blue-500" />
-    case "shared":
+    case "story_unsaved":
+      return <Bookmark className="h-5 w-5 text-gray-400" />
+    case "story_shared":
       return <Share2 className="h-5 w-5 text-green-500" />
-    case "read":
+    case "story_read":
       return <Eye className="h-5 w-5 text-purple-500" />
     case "profile_updated":
       return <User className="h-5 w-5 text-orange-500" />
     case "login":
-      return <Calendar className="h-5 w-5 text-gray-500" />
+      return <Calendar className="h-5 w-5 text-blue-600" />
+    case "signup":
+      return <User className="h-5 w-5 text-green-600" />
     default:
       return <Clock className="h-5 w-5 text-gray-400" />
   }
 }
 
-const getActivityMessage = (activity: Activity) => {
-  switch (activity.type) {
-    case "liked":
-      return `Liked "${activity.itemTitle || "a story"}"`
-    case "saved":
-      return `Saved "${activity.itemTitle || "a story"}" to favorites`
-    case "shared":
-      return `Shared "${activity.itemTitle || "a story"}"`
-    case "read":
-      return `Read "${activity.itemTitle || "a story"}"`
-    case "profile_updated":
-      return "Updated profile information"
-    case "login":
-      return "Signed in to account"
-    default:
-      return "Unknown activity"
-  }
-}
 
 export default function ActivitiesPage() {
   const [mounted, setMounted] = useState(false)
@@ -104,17 +92,18 @@ export default function ActivitiesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <p className="text-gray-900 dark:text-white font-medium">{getActivityMessage(activity)}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {formatDistanceToNow(activity.timestamp, { addSuffix: true })}
+                        <p className="text-gray-900 dark:text-white font-medium">{activity.title}</p>
+                        <p className="text-gray-700 dark:text-gray-300 mt-1">{activity.description}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                          {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
                         </p>
                       </div>
 
-                      {activity.itemImage && (
+                      {activity.metadata?.storyImage && (
                         <div className="flex-shrink-0 ml-4">
                           <img
-                            src={activity.itemImage || "/placeholder.svg"}
-                            alt={activity.itemTitle || "Activity item"}
+                            src={activity.metadata.storyImage || "/placeholder.svg"}
+                            alt={activity.metadata.storyTitle || "Activity item"}
                             className="w-16 h-16 rounded-lg object-cover"
                           />
                         </div>

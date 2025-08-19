@@ -136,9 +136,9 @@ export function FileConverter() {
 
   const isValidFile = (file: File): boolean => {
     const allFormats = { ...supportedFormats.documents, ...supportedFormats.images }
-    return (
+    return Boolean(
       allFormats[file.type as keyof typeof allFormats] ||
-      file.name.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|txt|rtf|jpg|jpeg|png|webp|tiff|tif|bmp|svg)$/) !== null
+      file.name.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx|txt|rtf|jpg|jpeg|png|webp|tiff|tif|bmp|svg)$/)
     )
   }
 
@@ -347,7 +347,7 @@ export function FileConverter() {
     setShowDownload(false)
 
     // Initialize progress tracking for all files
-    const initialProgress = {}
+    const initialProgress: Record<string, { progress: number; status: string }> = {}
     files.forEach((file) => {
       initialProgress[file.id] = { progress: 0, status: "Preparing..." }
     })

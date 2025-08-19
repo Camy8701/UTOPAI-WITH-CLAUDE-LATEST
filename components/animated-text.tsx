@@ -23,20 +23,10 @@ export default function AnimatedText({ text, className = "", delay = 0 }: Animat
     hidden: {
       opacity: 0,
       y: 20,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-      },
     },
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-      },
     },
   }
 

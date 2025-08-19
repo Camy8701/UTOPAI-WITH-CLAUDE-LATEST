@@ -31,15 +31,7 @@ export default function AnimateInView({
 
   const defaultVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration,
-        delay,
-        ease: [0.25, 0.1, 0.25, 1.0],
-      },
-    },
+    visible: { opacity: 1, y: 0 },
   }
 
   const currentVariants = variants || defaultVariants
@@ -77,7 +69,14 @@ export default function AnimateInView({
   }, [controls, isInView, once, threshold])
 
   return (
-    <motion.div ref={ref} initial="hidden" animate={controls} variants={currentVariants} className={className}>
+    <motion.div 
+      ref={ref} 
+      initial="hidden" 
+      animate={controls} 
+      variants={currentVariants} 
+      className={className}
+      transition={{ duration, delay, ease: "easeOut" }}
+    >
       {children}
     </motion.div>
   )

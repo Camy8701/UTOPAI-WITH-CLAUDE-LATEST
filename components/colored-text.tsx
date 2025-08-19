@@ -26,20 +26,10 @@ export default function ColoredText({ text, specialChars = {}, className = "", d
     hidden: {
       opacity: 0,
       y: 20,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-      },
     },
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        type: "spring",
-        damping: 12,
-        stiffness: 100,
-      },
     },
   }
 

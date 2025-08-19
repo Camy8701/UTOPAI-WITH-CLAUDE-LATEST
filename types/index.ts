@@ -99,12 +99,15 @@ export interface AuditLog {
 
 export interface Activity {
   id: string
-  userId: string
-  type: "like" | "share" | "comment" | "view" | "purchase"
-  resourceId: string
-  resourceType: "article" | "product" | "quiz"
-  timestamp: Date
-  metadata?: Record<string, any>
+  type: "story_liked" | "story_unliked" | "story_saved" | "story_unsaved" | "story_shared" | "story_read" | "profile_updated" | "login" | "signup"
+  title: string
+  description: string
+  timestamp: string
+  metadata?: {
+    storyImage?: string
+    storyTitle?: string
+    platform?: string
+  }
 }
 
 export interface ApiResponse<T = any> {
@@ -128,4 +131,13 @@ export interface ErrorInfo {
   stack?: string
   componentStack?: string
   errorBoundary?: string
+}
+
+export interface MainNavItem {
+  title: string
+  href?: string
+  disabled?: boolean
+  external?: boolean
+  icon?: string
+  description?: string
 }

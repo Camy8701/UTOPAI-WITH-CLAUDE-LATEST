@@ -4,18 +4,22 @@ import { createContext, useContext, useState, type ReactNode } from "react"
 
 export interface Activity {
   id: string
-  type: "liked" | "saved" | "shared" | "read" | "profile_updated" | "login"
-  itemId?: string
-  itemTitle?: string
-  itemImage?: string
-  timestamp: Date
-  metadata?: Record<string, any>
+  type: "story_liked" | "story_unliked" | "story_saved" | "story_unsaved" | "story_shared" | "story_read" | "profile_updated" | "login" | "signup"
+  title: string
+  description: string
+  timestamp: string
+  metadata?: {
+    storyImage?: string
+    storyTitle?: string
+    platform?: string
+  }
 }
 
 interface ActivityContextType {
   activities: Activity[]
   addActivity: (activity: Omit<Activity, "id" | "timestamp">) => void
   getRecentActivities: (limit?: number) => Activity[]
+  getActivitiesByType: (type: Activity['type']) => Activity[]
   clearActivities: () => void
 }
 
@@ -36,7 +40,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     const newActivity: Activity = {
       ...activity,
       id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     }
 
     setActivities((prev) => [newActivity, ...prev].slice(0, 100)) // Keep only last 100 activities
@@ -44,6 +48,10 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
 
   const getRecentActivities = (limit = 10) => {
     return activities.slice(0, limit)
+  }
+
+  const getActivitiesByType = (type: Activity['type']) => {
+    return activities.filter(activity => activity.type === type)
   }
 
   const clearActivities = () => {
@@ -54,6 +62,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     activities,
     addActivity,
     getRecentActivities,
+    getActivitiesByType,
     clearActivities,
   }
 

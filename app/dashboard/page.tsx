@@ -319,18 +319,14 @@ export default function Dashboard() {
               getRecentActivities(5).map((activity) => (
                 <div key={activity.id} className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center">
-                    {activity.type === 'liked' && <Heart className="h-4 w-4 mr-2 text-red-500" />}
-                    {activity.type === 'saved' && <Bookmark className="h-4 w-4 mr-2 text-green-500" />}
-                    {activity.type === 'shared' && <Star className="h-4 w-4 mr-2 text-blue-500" />}
-                    {activity.type === 'read' && <Calendar className="h-4 w-4 mr-2 text-purple-500" />}
+                    {activity.type === 'story_liked' && <Heart className="h-4 w-4 mr-2 text-red-500" />}
+                    {activity.type === 'story_saved' && <Bookmark className="h-4 w-4 mr-2 text-green-500" />}
+                    {activity.type === 'story_shared' && <Star className="h-4 w-4 mr-2 text-blue-500" />}
+                    {activity.type === 'story_read' && <Calendar className="h-4 w-4 mr-2 text-purple-500" />}
                     {activity.type === 'login' && <User className="h-4 w-4 mr-2 text-gray-500" />}
+                    {activity.type === 'profile_updated' && <User className="h-4 w-4 mr-2 text-orange-500" />}
                     <span>
-                      {activity.type === 'liked' && `Liked "${activity.itemTitle || 'a story'}"`}
-                      {activity.type === 'saved' && `Saved "${activity.itemTitle || 'a story'}"`}
-                      {activity.type === 'shared' && `Shared "${activity.itemTitle || 'a story'}"`}
-                      {activity.type === 'read' && `Read "${activity.itemTitle || 'a story'}"`}
-                      {activity.type === 'login' && 'Signed in to account'}
-                      {activity.type === 'profile_updated' && 'Updated profile'}
+                      {activity.description}
                     </span>
                   </div>
                 </div>
