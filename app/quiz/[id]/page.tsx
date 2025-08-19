@@ -1494,7 +1494,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
           name: playerName.trim(),
           score: points,
           percentage,
-          quizType: quiz.title,
+          quizType: quiz?.title || 'Unknown Quiz',
           timestamp: Date.now(),
         }
         saveToLeaderboard(entry)
@@ -1513,7 +1513,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
           name: playerName.trim(),
           score: points,
           percentage,
-          quizType: quiz.title,
+          quizType: quiz?.title || 'Unknown Quiz',
           timestamp: Date.now(),
         }
         saveToLeaderboard(entry)

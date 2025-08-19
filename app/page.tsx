@@ -190,9 +190,8 @@ THE END`
       setSelectedStory(story)
       setStoryModalOpen(true)
     } else if (action === "listen") {
-      setTimeout(() => {
-        handleChatbotReadStory(story.content)
-      }, 500)
+      // TODO: Implement text-to-speech functionality
+      console.log("Listen feature not yet implemented")
     }
   }
 
@@ -525,9 +524,8 @@ THE END`
                                 })
                                 setAudioPlayerOpen(true)
                               } else {
-                                console.log('No audio URL found, falling back to TTS')
-                                // No audio file, use TTS as fallback
-                                handleChatbotReadStory(post.content)
+                                console.log('No audio URL found, TTS not yet implemented')
+                                // TODO: Implement TTS functionality
                               }
                             }}
                           >

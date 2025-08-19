@@ -127,13 +127,17 @@ export async function GET(request: NextRequest) {
 
     // Add comments to activity
     recentComments?.forEach(comment => {
-      if (comment.blog_posts) {
+      const commentBlogPost = Array.isArray(comment.blog_posts) 
+        ? comment.blog_posts[0] 
+        : comment.blog_posts
+        
+      if (commentBlogPost) {
         activities.push({
           type: 'comment',
           timestamp: comment.created_at,
-          title: comment.blog_posts.title,
-          slug: comment.blog_posts.slug,
-          description: `Commented on "${comment.blog_posts.title}"`,
+          title: commentBlogPost.title,
+          slug: commentBlogPost.slug,
+          description: `Commented on "${commentBlogPost.title}"`,
           preview: comment.content.substring(0, 100) + (comment.content.length > 100 ? '...' : '')
         })
       }
@@ -141,13 +145,17 @@ export async function GET(request: NextRequest) {
 
     // Add saves to activity
     recentSaves?.forEach(save => {
-      if (save.blog_posts) {
+      const saveBlogPost = Array.isArray(save.blog_posts) 
+        ? save.blog_posts[0] 
+        : save.blog_posts
+        
+      if (saveBlogPost) {
         activities.push({
           type: 'save',
           timestamp: save.created_at,
-          title: save.blog_posts.title,
-          slug: save.blog_posts.slug,
-          description: `Saved "${save.blog_posts.title}"`
+          title: saveBlogPost.title,
+          slug: saveBlogPost.slug,
+          description: `Saved "${saveBlogPost.title}"`
         })
       }
     })
