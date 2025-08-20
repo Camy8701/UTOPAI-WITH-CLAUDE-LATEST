@@ -423,14 +423,9 @@ THE END`
                 </p>
               </div>
 
-              {storiesLoading ? (
-                <div className="col-span-full text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-gray-600 dark:text-gray-400 mt-4">Loading featured stories...</p>
-                </div>
-              ) : (
-                <StaggeredGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" delay={0.2}>
-                  {(featuredStories.length > 0 ? featuredStories : featuredCollections).map((post, i) => (
+              <StaggeredGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" delay={0.2}>
+                {/* Always show static featured collection while loading database posts */}
+                {((featuredStories.length > 0 && !storiesLoading) ? featuredStories : featuredCollections).map((post, i) => (
                     <PremiumCard
                       key={post.id || `static-${i}`}
                       variant="story"
@@ -555,8 +550,7 @@ THE END`
                       </div>
                     </PremiumCard>
                   ))}
-                </StaggeredGrid>
-              )}
+              </StaggeredGrid>
 
               <div className="mt-16 text-center">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

@@ -2,28 +2,28 @@ import { supabase } from './supabase'
 
 // Utility for making authenticated API requests from client-side
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  // Get current session token for authorization
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  const defaultOptions: RequestInit = {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(session?.access_token ? { 
-        'authorization': `Bearer ${session.access_token}` 
-      } : {}),
-      ...options.headers,
-    },
-    ...options,
-  }
-
-  console.log('API Request to:', endpoint, {
-    method: options.method || 'GET',
-    credentials: defaultOptions.credentials,
-    headers: defaultOptions.headers
-  })
-
   try {
+    // Get current session token for authorization
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    const defaultOptions: RequestInit = {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { 
+          'authorization': `Bearer ${session.access_token}` 
+        } : {}),
+        ...options.headers,
+      },
+      ...options,
+    }
+
+    console.log('API Request to:', endpoint, {
+      method: options.method || 'GET',
+      credentials: defaultOptions.credentials,
+      headers: defaultOptions.headers
+    })
+
     const response = await fetch(endpoint, defaultOptions)
     
     console.log('API Response:', {
@@ -54,6 +54,10 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     
   } catch (error) {
     console.error('Fetch Error:', error)
+    // Check if it's a network error or server unavailable
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('Unable to connect to server. Please check your internet connection.')
+    }
     throw error
   }
 }

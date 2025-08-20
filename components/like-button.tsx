@@ -41,7 +41,9 @@ export function LikeButton({
         setLikeCount(data.like_count || initialLikeCount)
       } catch (error) {
         console.error('Error checking like status:', error)
-        // Don't show error for like status check, just log it
+        // Fallback to initial values on error
+        setIsLiked(false)
+        setLikeCount(initialLikeCount)
       }
     }
 
@@ -70,7 +72,11 @@ export function LikeButton({
       setLikeCount(data.like_count)
     } catch (error) {
       console.error('Error toggling like:', error)
-      setError(error instanceof Error ? error.message : 'Failed to update like')
+      // Provide user-friendly error message but continue functioning
+      setError('Unable to connect to server. Please try again later.')
+      // Optimistic update for better UX even if server fails
+      setIsLiked(!isLiked)
+      setLikeCount(isLiked ? Math.max(0, likeCount - 1) : likeCount + 1)
     } finally {
       setIsLoading(false)
     }

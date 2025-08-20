@@ -1,25 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { validateEnvironment } from './env-check'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Initialize client with proper error handling
+let supabaseClient: ReturnType<typeof createClient<Database>> | null = null
 
-if (!supabaseUrl) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL')
+function getSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient
+  }
+
+  try {
+    const { supabaseUrl, supabaseAnonKey } = validateEnvironment()
+    
+    supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      },
+    })
+
+    console.log('✅ Supabase client initialized successfully')
+    return supabaseClient
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error)
+    throw error
+  }
 }
-if (!supabaseAnonKey) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY')
-}
 
-// Single client instance with proper session persistence
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-  },
-})
+// Export the client getter
+export const supabase = getSupabaseClient()
 
 // For consistency with auth provider
 export const createClientComponentClient = () => supabase

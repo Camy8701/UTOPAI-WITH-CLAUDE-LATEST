@@ -26,9 +26,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  
+  // Initialize Supabase client with error handling
+  const [supabase, setSupabase] = useState<ReturnType<typeof createClientComponentClient> | null>(null)
+  
+  useEffect(() => {
+    try {
+      const client = createClientComponentClient()
+      setSupabase(client)
+    } catch (error) {
+      console.error('Failed to initialize Supabase client:', error)
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
+    if (!supabase) return
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -101,6 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const loadUserProfile = async (userId: string) => {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      setLoading(false)
+      return
+    }
+
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -136,6 +156,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const createUserProfile = async (user: User) => {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      setLoading(false)
+      return
+    }
+
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -175,10 +201,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
+    if (!supabase) {
+      throw new Error('Authentication service is not available. Please refresh the page and try again.')
+    }
+
     try {
-      const isProduction = window.location.hostname === 'www.utopai.blog'
+      const isProduction = window.location.hostname === 'www.utopai.blog' || 
+                          window.location.hostname === 'utopai.blog' ||
+                          window.location.hostname.includes('vercel.app')
       const redirectTo = isProduction 
-        ? 'https://www.utopai.blog/auth/callback'
+        ? `${window.location.origin}/auth/callback`
         : `${window.location.origin}/auth/callback`
 
       console.log('Starting Google OAuth with redirect:', redirectTo)
@@ -207,6 +239,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithEmail = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Authentication service is not available. Please refresh the page and try again.')
+    }
+
     try {
       console.log('Attempting email sign-in for:', email)
       
@@ -236,6 +272,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUpWithEmail = async (email: string, password: string, fullName?: string) => {
+    if (!supabase) {
+      throw new Error('Authentication service is not available. Please refresh the page and try again.')
+    }
+
     try {
       console.log('Attempting email sign-up for:', email)
       
@@ -246,9 +286,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName || '',
           },
-          emailRedirectTo: window.location.hostname === 'www.utopai.blog'
-            ? 'https://www.utopai.blog/auth/callback'
-            : `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         },
       })
       
@@ -272,10 +310,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // Sign out from Supabase
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Supabase signOut error:', error)
-        throw error
+      if (supabase) {
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+          console.error('Supabase signOut error:', error)
+          throw error
+        }
       }
     } catch (error) {
       console.error('Error signing out:', error)

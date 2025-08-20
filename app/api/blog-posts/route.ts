@@ -7,24 +7,39 @@ type BlogPost = Database['public']['Tables']['blog_posts']['Row']
 type BlogPostInsert = Database['public']['Tables']['blog_posts']['Insert']
 
 async function createSupabaseServer() {
-  const cookieStore = await cookies()
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options })
-        },
-        remove(name: string, options: any) {
-          cookieStore.delete({ name, ...options })
-        },
-      },
+  try {
+    const cookieStore = await cookies()
+    
+    // Check environment variables
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !key) {
+      console.error('Missing Supabase environment variables:', { hasUrl: !!url, hasKey: !!key })
+      throw new Error('Supabase configuration is missing')
     }
-  )
+    
+    return createServerClient<Database>(
+      url,
+      key,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.delete({ name, ...options })
+          },
+        },
+      }
+    )
+  } catch (error) {
+    console.error('Failed to create Supabase server client:', error)
+    throw error
+  }
 }
 
 // GET /api/blog-posts - Get all blog posts with optional filtering
@@ -58,13 +73,20 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching blog posts:', error)
+      
+      // Check if it's a table not found error (database not set up)
+      if (error.code === 'PGRST116') {
+        console.log('Blog posts table not found, returning empty array')
+        return NextResponse.json({ posts: [] })
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to fetch blog posts' },
+        { error: 'Failed to fetch blog posts', details: error.message },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({ posts: data })
+    return NextResponse.json({ posts: data || [] })
   } catch (error) {
     console.error('API error:', error)
     return NextResponse.json(
