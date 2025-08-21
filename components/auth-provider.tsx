@@ -279,6 +279,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Attempting email sign-up for:', email)
       
+      // Use the current domain for redirect
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://utopai.blog'
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -286,16 +289,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             full_name: fullName || '',
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${currentOrigin}/auth/callback`,
+          captchaToken: undefined // Explicitly set to avoid issues
         },
       })
       
       if (error) {
         console.error('Email sign-up error:', error)
+        
+        // Handle specific fetch errors more gracefully
+        if (error.message?.includes('Invalid value') || error.message?.includes('fetch')) {
+          throw new Error('Network error during sign-up. Please check your connection and try again.')
+        }
+        
         throw error
       }
-    } catch (error) {
+      
+      console.log('Email sign-up successful:', data)
+    } catch (error: any) {
       console.error('Error signing up with email:', error)
+      
+      // Provide user-friendly error messages
+      if (error.message?.includes('Invalid value') || error.message?.includes('fetch')) {
+        throw new Error('Network error during sign-up. Please refresh the page and try again.')
+      }
+      
       throw error
     }
   }

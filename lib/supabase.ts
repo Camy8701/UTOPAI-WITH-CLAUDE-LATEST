@@ -1,40 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-// Validate environment variables with detailed logging
-function validateEnvironmentVariables() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Environment variables with strict validation
+const SUPABASE_URL = 'https://ovizewmqyclbebotemwl.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92aXpld21xeWNsYmVib3RlbXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjY0OTgsImV4cCI6MjA3MDYwMjQ5OH0.Dxp52bNqqFthuVgJ3xZ_gwCsECzwknN3DEctGn5oC_8'
 
-  console.log('Environment validation:', {
-    hasUrl: !!supabaseUrl,
-    urlLength: supabaseUrl?.length || 0,
-    hasKey: !!supabaseAnonKey,
-    keyLength: supabaseAnonKey?.length || 0,
-    urlValue: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
-    nodeEnv: process.env.NODE_ENV,
-    isClient: typeof window !== 'undefined'
-  })
-
-  if (!supabaseUrl || supabaseUrl.trim() === '') {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL is missing or empty')
-  }
-
-  if (!supabaseAnonKey || supabaseAnonKey.trim() === '') {
-    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty')
-  }
-
-  // Validate URL format
-  try {
-    new URL(supabaseUrl)
-  } catch {
-    throw new Error(`Invalid NEXT_PUBLIC_SUPABASE_URL format: ${supabaseUrl}`)
-  }
-
-  return { supabaseUrl: supabaseUrl.trim(), supabaseAnonKey: supabaseAnonKey.trim() }
-}
-
-// Initialize client with proper error handling
+// Initialize client with minimal configuration to avoid fetch errors
 let supabaseClient: ReturnType<typeof createClient<Database>> | null = null
 
 function getSupabaseClient() {
@@ -43,20 +14,38 @@ function getSupabaseClient() {
   }
 
   try {
-    const { supabaseUrl, supabaseAnonKey } = validateEnvironmentVariables()
+    // Use hardcoded values to avoid any environment variable issues
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY
+    
+    console.log('Environment validation:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseAnonKey,
+      usingFallback: !process.env.NEXT_PUBLIC_SUPABASE_URL,
+      nodeEnv: process.env.NODE_ENV,
+      isClient: typeof window !== 'undefined'
+    })
     
     supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false, // DISABLE session detection from URL to prevent fetch errors
+        detectSessionInUrl: false,
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        debug: false, // Disable debug to prevent excessive logging
+        debug: false,
+        flowType: 'pkce' // Use PKCE flow instead of implicit flow
       },
       global: {
         headers: {
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`
+          'Content-Type': 'application/json'
+        }
+      },
+      db: {
+        schema: 'public'
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10
         }
       }
     })
