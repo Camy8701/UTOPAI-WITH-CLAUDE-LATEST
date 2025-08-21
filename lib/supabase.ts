@@ -1,17 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-// Get environment variables with fallback to hardcoded values for Next.js 15.x bug
-function getEnvironmentVariables() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ovizewmqyclbebotemwl.supabase.co'
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92aXpld21xeWNsYmVib3RlbXdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjY0OTgsImV4cCI6MjA3MDYwMjQ5OH0.Dxp52bNqqFthuVgJ3xZ_gwCsECzwknN3DEctGn5oC_8'
-  
-  console.log('Environment check:', {
-    hasEnvUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasEnvKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    usingFallback: !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  })
-  
+// Validate environment variables
+function validateEnvironmentVariables() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  }
+
+  if (!supabaseAnonKey) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+  }
+
   return { supabaseUrl, supabaseAnonKey }
 }
 
@@ -24,7 +26,7 @@ function getSupabaseClient() {
   }
 
   try {
-    const { supabaseUrl, supabaseAnonKey } = getEnvironmentVariables()
+    const { supabaseUrl, supabaseAnonKey } = validateEnvironmentVariables()
     
     supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
