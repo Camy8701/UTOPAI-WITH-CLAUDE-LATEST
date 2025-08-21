@@ -74,9 +74,15 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error fetching blog posts:', error)
       
-      // Check if it's a table not found error (database not set up)
-      if (error.code === 'PGRST116') {
-        console.log('Blog posts table not found, returning empty array')
+      // Check if it's a table not found error or permission error (database not set up)
+      if (error.code === 'PGRST116' || error.code === '42P01' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        console.log('Blog posts table not found or not accessible, returning empty array')
+        return NextResponse.json({ posts: [] })
+      }
+      
+      // For production, return empty array instead of 500 error to prevent infinite loops
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Production: Returning empty array for any database error to prevent infinite loops')
         return NextResponse.json({ posts: [] })
       }
       
@@ -89,6 +95,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ posts: data || [] })
   } catch (error) {
     console.error('API error:', error)
+    
+    // In production, return empty array to prevent infinite retry loops
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Production: Returning empty array for catch block to prevent infinite loops')
+      return NextResponse.json({ posts: [] })
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
