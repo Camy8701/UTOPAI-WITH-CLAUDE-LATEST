@@ -15,15 +15,16 @@ import {
 import { Alert, AlertDescription } from './ui/alert'
 import { LogIn, User, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
-interface AuthModalProps {
+interface FirebaseAuthModalProps {
   isOpen: boolean
   onClose: () => void
   mode?: 'signin' | 'signup'
 }
 
-export function AuthModal({ isOpen, onClose, mode = 'signin' }: AuthModalProps) {
+export function FirebaseAuthModal({ isOpen, onClose, mode = 'signin' }: FirebaseAuthModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -37,11 +38,12 @@ export function AuthModal({ isOpen, onClose, mode = 'signin' }: AuthModalProps) 
     try {
       setLoading(true)
       setError(null)
+      setSuccess(null)
       await signInWithGoogle()
-      // Note: The modal will close automatically when auth state changes
-    } catch (err) {
+      onClose()
+    } catch (err: any) {
       console.error('Sign in error:', err)
-      setError('Failed to sign in with Google. Please try again.')
+      setError(err.message || 'Failed to sign in with Google. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -63,15 +65,19 @@ export function AuthModal({ isOpen, onClose, mode = 'signin' }: AuthModalProps) 
     try {
       setLoading(true)
       setError(null)
+      setSuccess(null)
       
       if (isSignUp) {
         await signUpWithEmail(email, password, fullName)
-        setError('Please check your email to confirm your account.')
+        setSuccess('Account created successfully! You are now signed in.')
       } else {
         await signInWithEmail(email, password)
       }
       
-      onClose()
+      // Small delay to show success message
+      setTimeout(() => {
+        onClose()
+      }, 1000)
     } catch (err: any) {
       console.error('Email auth error:', err)
       setError(err.message || `Failed to ${isSignUp ? 'sign up' : 'sign in'}. Please try again.`)
@@ -97,9 +103,17 @@ export function AuthModal({ isOpen, onClose, mode = 'signin' }: AuthModalProps) 
 
         <div className="space-y-4">
           {error && (
-            <Alert className={`${error.includes('check your email') ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'}`}>
-              <AlertDescription className={`${error.includes('check your email') ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+            <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
+              <AlertDescription className="text-red-800 dark:text-red-200">
                 {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {success && (
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                {success}
               </AlertDescription>
             </Alert>
           )}

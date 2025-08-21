@@ -1,6 +1,6 @@
 "use client"
 
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import { useActivity } from '@/components/activity-context'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -28,7 +28,7 @@ interface UserStats {
 }
 
 export default function Dashboard() {
-  const { user, profile, loading, signOut } = useAuth()
+  const { user, profile, loading, signOut } = useFirebaseAuth()
   const { getRecentActivities } = useActivity()
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)

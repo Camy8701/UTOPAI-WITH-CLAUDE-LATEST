@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
@@ -38,7 +38,7 @@ interface LikedPost {
 }
 
 export default function LikedPostsPage() {
-  const { user, loading } = useAuth()
+  const { user, loading } = useFirebaseAuth()
   const [likedPosts, setLikedPosts] = useState<LikedPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

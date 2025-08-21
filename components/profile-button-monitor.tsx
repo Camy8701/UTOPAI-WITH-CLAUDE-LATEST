@@ -1,14 +1,14 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { useAuth } from './auth-provider'
+import { useFirebaseAuth } from './firebase-auth-provider'
 
 interface ProfileButtonMonitorProps {
   onFailureDetected: () => void
 }
 
 export function ProfileButtonMonitor({ onFailureDetected }: ProfileButtonMonitorProps) {
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   const [clickAttempts, setClickAttempts] = useState(0)
   const [lastClickTime, setLastClickTime] = useState<number>(0)
 

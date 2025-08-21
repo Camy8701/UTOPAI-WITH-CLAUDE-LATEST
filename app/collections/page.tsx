@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import { Heart, Share2 } from "lucide-react"
 import { StoryActionButtons } from "@/components/story-action-buttons"
 import PremiumCard from "@/components/premium-card"
-import { useAuth } from "@/components/auth-provider"
+import { useFirebaseAuth } from "@/components/firebase-auth-provider"
 import { useBlogPosts } from "@/hooks/use-blog-posts"
 import { useState, useEffect } from "react"
 
@@ -97,7 +97,7 @@ const featuredCollections = [
 const categories = ["All Collections", "Featured", "Technology", "Society", "Creative", "Science", "Business"]
 
 export default function CollectionsPage() {
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [filteredStories, setFilteredStories] = useState(featuredCollections)
   const [selectedCategory, setSelectedCategory] = useState('All Collections')

@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from 'react'
-import { useAuth } from './auth-provider'
+import { useFirebaseAuth } from './firebase-auth-provider'
 import { createClientComponentClient } from '@/lib/supabase'
 import { Button } from './ui/button'
 
 export function AuthTestButton() {
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   const [testResult, setTestResult] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   

@@ -6,7 +6,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Share2, ArrowRight, MessageCircle } from "lucide-react"
 import { StoryActionButtons } from "@/components/story-action-buttons"
-import { useAuth } from "@/components/auth-provider"
+import { useFirebaseAuth } from "@/components/firebase-auth-provider"
 import { useBlogPosts } from "@/hooks/use-blog-posts"
 import Header from "@/components/header"
 import SectionNavigation from "@/components/section-navigation"
@@ -46,7 +46,7 @@ interface StoryContent {
 }
 
 export default function Page() {
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   const [mounted, setMounted] = useState(false)
   
   // Fetch real posts from database

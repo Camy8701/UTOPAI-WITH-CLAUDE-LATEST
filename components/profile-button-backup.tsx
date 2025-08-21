@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { useAuth } from './auth-provider'
+import { useFirebaseAuth } from './firebase-auth-provider'
 
 export function ProfileButtonBackup() {
-  const { user, profile } = useAuth()
+  const { user, profile } = useFirebaseAuth()
   
   if (!user) return null
   

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import { LikeButton } from '@/components/like-button'
 import { StoryActionButtons } from '@/components/story-action-buttons'
-import { AuthModal } from '@/components/auth-modal'
+import { FirebaseAuthModal } from '@/components/firebase-auth-modal'
 import { Button } from '@/components/ui/button'
 import { 
   MessageCircle, 
@@ -40,7 +40,7 @@ interface StoryInteractionsProps {
 }
 
 export function StoryInteractions({ postId, initialLikeCount = 0, title = "Story" }: StoryInteractionsProps) {
-  const { user, loading } = useAuth()
+  const { user, loading } = useFirebaseAuth()
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState<string | null>(null)
@@ -364,7 +364,7 @@ export function StoryInteractions({ postId, initialLikeCount = 0, title = "Story
       </div>
 
       {/* Auth Modal */}
-      <AuthModal 
+      <FirebaseAuthModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         mode={authMode}

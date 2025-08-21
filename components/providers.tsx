@@ -3,7 +3,7 @@
 import type { ReactNode } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { UserProvider } from "@/components/user-context"
-import { AuthProvider } from "@/components/auth-provider"
+import { FirebaseAuthProvider } from "@/components/firebase-auth-provider"
 import { ActivityProvider } from "@/components/activity-context"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -14,7 +14,7 @@ import { Toaster } from "@/components/ui/toaster"
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <AuthProvider>
+      <FirebaseAuthProvider>
         <UserProvider>
           <ActivityProvider>
             {children}
@@ -22,7 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
             <Toaster />
           </ActivityProvider>
         </UserProvider>
-      </AuthProvider>
+      </FirebaseAuthProvider>
     </ThemeProvider>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import Link from 'next/link'
 import { 
   ArrowLeft, 
@@ -41,7 +41,7 @@ interface QuizStats {
 }
 
 export default function QuizScoresPage() {
-  const { user, loading } = useAuth()
+  const { user, loading } = useFirebaseAuth()
   const [quizScores, setQuizScores] = useState<QuizScore[]>([])
   const [stats, setStats] = useState<QuizStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)

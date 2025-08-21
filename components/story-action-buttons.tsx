@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react'
-import { useAuth } from './auth-provider'
+import { useFirebaseAuth } from './firebase-auth-provider'
 import { LikeButton } from './like-button'
 
 interface StoryActionButtonsProps {
@@ -31,7 +31,7 @@ export function StoryActionButtons({
   showCounts = true,
   layout = 'horizontal'
 }: StoryActionButtonsProps) {
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   const [isSaved, setIsSaved] = useState(false)
 
   const handleComment = () => {

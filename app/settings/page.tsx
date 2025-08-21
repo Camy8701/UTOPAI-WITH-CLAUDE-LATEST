@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -30,7 +30,7 @@ interface UserSettings {
 }
 
 export default function SettingsPage() {
-  const { user, profile, loading } = useAuth()
+  const { user, profile, loading } = useFirebaseAuth()
   const router = useRouter()
   const [settings, setSettings] = useState<UserSettings>({
     full_name: '',

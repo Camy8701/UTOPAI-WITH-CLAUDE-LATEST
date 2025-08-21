@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { LikeButton } from '@/components/like-button'
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 
 interface BlogPost {
   id: string
@@ -30,7 +30,7 @@ export default function TestDbPage() {
   const [error, setError] = useState<string | null>(null)
   const [migrating, setMigrating] = useState(false)
   const [migrationResult, setMigrationResult] = useState<string | null>(null)
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
 
   useEffect(() => {
     fetchPosts()

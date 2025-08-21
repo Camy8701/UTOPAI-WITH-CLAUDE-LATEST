@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from './auth-provider'
-import { AuthModal } from './auth-modal'
+import { useFirebaseAuth } from './firebase-auth-provider'
+import { FirebaseAuthModal } from './firebase-auth-modal'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { 
@@ -16,7 +16,7 @@ import {
 import { LogIn, User, Settings, LogOut, Shield } from 'lucide-react'
 
 export function UserMenu() {
-  const { user, profile, signOut, loading } = useAuth()
+  const { user, profile, signOut, loading } = useFirebaseAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [forceRender, setForceRender] = useState(0)
@@ -69,15 +69,13 @@ export function UserMenu() {
   const getUserDisplayData = () => {
     if (!user) return null
     
-    // Try to get name from profile first, then user metadata, then email
+    // Try to get name from profile first, then Firebase user displayName, then email
     let displayName = 'User' // Default fallback
     
-    if (profile?.full_name) {
-      displayName = profile.full_name
-    } else if (user.user_metadata?.full_name) {
-      displayName = user.user_metadata.full_name
-    } else if (user.user_metadata?.name) {
-      displayName = user.user_metadata.name
+    if (profile?.displayName) {
+      displayName = profile.displayName
+    } else if (user.displayName) {
+      displayName = user.displayName
     } else if (user.email) {
       displayName = user.email.split('@')[0]
     }
@@ -125,7 +123,7 @@ export function UserMenu() {
           </Button>
         </div>
         
-        <AuthModal 
+        <FirebaseAuthModal 
           isOpen={showAuthModal}
           onClose={closeModal}
           mode={authMode}
@@ -149,7 +147,7 @@ export function UserMenu() {
           >
             <Avatar className="h-8 w-8">
               <AvatarImage 
-                src={profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined} 
+                src={profile?.photoURL || user.photoURL || undefined} 
                 alt={userDisplayData?.displayName || 'User'}
               />
               <AvatarFallback className={`text-white text-xs font-semibold ${
@@ -173,7 +171,7 @@ export function UserMenu() {
           <div className="flex items-center gap-2 p-2">
             <Avatar className="h-8 w-8">
               <AvatarImage 
-                src={profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || undefined} 
+                src={profile?.photoURL || user.photoURL || undefined} 
                 alt={userDisplayData?.displayName || 'User'}
               />
               <AvatarFallback className={`text-white text-xs font-semibold ${

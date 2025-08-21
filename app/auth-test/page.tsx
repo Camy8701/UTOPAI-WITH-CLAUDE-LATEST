@@ -1,10 +1,10 @@
 "use client"
 
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import { Button } from '@/components/ui/button'
 
 export default function AuthTestPage() {
-  const { user, profile, session, loading, signInWithGoogle, signOut } = useAuth()
+  const { user, profile, session, loading, signInWithGoogle, signOut } = useFirebaseAuth()
 
   const handleSignIn = async () => {
     try {

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Heart, MessageCircle, Volume2, BookOpen } from "lucide-react"
 import { LikeButton } from "./like-button"
-import { useAuth } from "./auth-provider"
+import { useFirebaseAuth } from "./firebase-auth-provider"
 
 interface StoryImage {
   src: string
@@ -36,7 +36,7 @@ export default function InteractiveStoryCarousel({
   onStoryRead,
   onAudioPlay
 }: InteractiveStoryCarouselProps) {
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   const [duplicatedStories, setDuplicatedStories] = useState<StoryImage[]>([])
   const [flippedCards, setFlippedCards] = useState<Set<number>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)

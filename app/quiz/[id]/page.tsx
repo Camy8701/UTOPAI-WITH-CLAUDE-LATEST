@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, CheckCircle, XCircle, Trophy, RotateCcw, Crown, User } from "lucide-react"
-import { useAuth } from '@/components/auth-provider'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import { quizAPI, type QuizResult } from '@/lib/quiz-api-client'
 
 /* -------------------------------------------------------------------------- */
@@ -1377,7 +1377,7 @@ const getUserRank = (score: number): number => {
 
 export default function QuizPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user } = useFirebaseAuth()
   
   // Extract the id from params
   const [quizId, setQuizId] = useState<string | null>(null)

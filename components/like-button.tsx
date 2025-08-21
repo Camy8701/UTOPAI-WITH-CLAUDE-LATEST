@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Heart } from 'lucide-react'
 import { Button } from './ui/button'
-import { useAuth } from './auth-provider'
+import { useFirebaseAuth } from './firebase-auth-provider'
 import { cn } from '@/lib/utils'
 import { likesAPI } from '@/lib/api-client'
 
@@ -24,7 +24,7 @@ export function LikeButton({
   size = 'md',
   showCount = true
 }: LikeButtonProps) {
-  const { user, loading } = useAuth()
+  const { user, loading } = useFirebaseAuth()
   const [isLiked, setIsLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(initialLikeCount)
   const [isLoading, setIsLoading] = useState(false)
