@@ -1,20 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
-// Validate environment variables
+// Validate environment variables with detailed logging
 function validateEnvironmentVariables() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!supabaseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+  console.log('Environment validation:', {
+    hasUrl: !!supabaseUrl,
+    urlLength: supabaseUrl?.length || 0,
+    hasKey: !!supabaseAnonKey,
+    keyLength: supabaseAnonKey?.length || 0,
+    urlValue: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
+    nodeEnv: process.env.NODE_ENV,
+    isClient: typeof window !== 'undefined'
+  })
+
+  if (!supabaseUrl || supabaseUrl.trim() === '') {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is missing or empty')
   }
 
-  if (!supabaseAnonKey) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
+  if (!supabaseAnonKey || supabaseAnonKey.trim() === '') {
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or empty')
   }
 
-  return { supabaseUrl, supabaseAnonKey }
+  // Validate URL format
+  try {
+    new URL(supabaseUrl)
+  } catch {
+    throw new Error(`Invalid NEXT_PUBLIC_SUPABASE_URL format: ${supabaseUrl}`)
+  }
+
+  return { supabaseUrl: supabaseUrl.trim(), supabaseAnonKey: supabaseAnonKey.trim() }
 }
 
 // Initialize client with proper error handling
@@ -34,7 +51,14 @@ function getSupabaseClient() {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        debug: process.env.NODE_ENV === 'development',
       },
+      global: {
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        }
+      }
     })
 
     console.log('✅ Supabase client initialized successfully')
