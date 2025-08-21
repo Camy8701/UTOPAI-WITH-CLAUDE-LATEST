@@ -26,27 +26,13 @@ function getSupabaseClient() {
       isClient: typeof window !== 'undefined'
     })
     
+    // Ultra-minimal configuration to avoid header issues
     supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: false,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        debug: false,
-        flowType: 'pkce' // Use PKCE flow instead of implicit flow
-      },
-      global: {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      },
-      db: {
-        schema: 'public'
-      },
-      realtime: {
-        params: {
-          eventsPerSecond: 10
-        }
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined
       }
     })
 
