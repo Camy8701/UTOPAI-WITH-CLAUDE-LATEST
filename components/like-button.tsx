@@ -5,7 +5,7 @@ import { Heart } from 'lucide-react'
 import { Button } from './ui/button'
 import { useFirebaseAuth } from './firebase-auth-provider'
 import { cn } from '@/lib/utils'
-import { likesAPI } from '@/lib/api-client'
+import { toggleLike, getLikeCount, checkUserLike } from '@/lib/firebase-likes'
 
 interface LikeButtonProps {
   postId?: string
@@ -30,24 +30,31 @@ export function LikeButton({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Check if user has liked this item
+  // Check if user has liked this item and get like count
   useEffect(() => {
-    if (loading || !user || (!postId && !commentId)) return
+    if (loading || (!postId && !commentId)) return
 
-    const checkLikeStatus = async () => {
+    const loadLikeData = async () => {
       try {
-        const data = await likesAPI.getLikeStatus(postId, commentId)
-        setIsLiked(data.liked)
-        setLikeCount(data.like_count || initialLikeCount)
+        // Get like count (works for all users)
+        const count = await getLikeCount(postId, commentId)
+        setLikeCount(count)
+        
+        // Check if current user has liked (only if authenticated)
+        if (user) {
+          const liked = await checkUserLike(user.uid, postId, commentId)
+          setIsLiked(liked)
+        } else {
+          setIsLiked(false)
+        }
       } catch (error) {
-        console.error('Error checking like status:', error)
-        // Fallback to initial values on error
-        setIsLiked(false)
+        console.error('Error loading like data:', error)
         setLikeCount(initialLikeCount)
+        setIsLiked(false)
       }
     }
 
-    checkLikeStatus()
+    loadLikeData()
   }, [user, loading, postId, commentId, initialLikeCount])
 
   const handleLike = async () => {
@@ -65,18 +72,20 @@ export function LikeButton({
     setError(null)
 
     try {
-      const action = isLiked ? 'unlike' : 'like'
-      const data = await likesAPI.toggleLike(postId, commentId, action)
+      const result = await toggleLike(user.uid, postId, commentId)
       
-      setIsLiked(data.liked)
-      setLikeCount(data.like_count)
+      // Update UI immediately with the result
+      setIsLiked(result.liked)
+      
+      // Get updated like count
+      const newCount = await getLikeCount(postId, commentId)
+      setLikeCount(newCount)
     } catch (error) {
       console.error('Error toggling like:', error)
-      // Provide user-friendly error message but continue functioning
-      setError('Unable to connect to server. Please try again later.')
-      // Optimistic update for better UX even if server fails
-      setIsLiked(!isLiked)
-      setLikeCount(isLiked ? Math.max(0, likeCount - 1) : likeCount + 1)
+      setError('Unable to save like. Please try again.')
+      
+      // Revert optimistic update
+      setIsLiked(isLiked)
     } finally {
       setIsLoading(false)
     }

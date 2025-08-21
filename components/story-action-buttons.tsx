@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react'
 import { useFirebaseAuth } from './firebase-auth-provider'
 import { LikeButton } from './like-button'
+import { toggleSavePost, checkPostSaved } from '@/lib/firebase-saves'
+import { sharePost } from '@/lib/share-utils'
 
 interface StoryActionButtonsProps {
   postId: string
@@ -33,6 +35,16 @@ export function StoryActionButtons({
 }: StoryActionButtonsProps) {
   const { user } = useFirebaseAuth()
   const [isSaved, setIsSaved] = useState(false)
+  const [saveLoading, setSaveLoading] = useState(false)
+
+  // Check if post is saved when user changes
+  useEffect(() => {
+    if (user && postId) {
+      checkPostSaved(user.uid, postId).then(setIsSaved)
+    } else {
+      setIsSaved(false)
+    }
+  }, [user, postId])
 
   const handleComment = () => {
     if (slug) {
@@ -42,50 +54,37 @@ export function StoryActionButtons({
     }
   }
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: title,
-        text: description,
-        url: slug ? `${window.location.origin}/stories/${slug}` : window.location.href,
-      }).catch((error) => {
-        console.log('Error sharing:', error)
-        copyToClipboard()
-      })
-    } else {
-      copyToClipboard()
-    }
-  }
-
-  const copyToClipboard = () => {
+  const handleShare = async () => {
     const url = slug ? `${window.location.origin}/stories/${slug}` : window.location.href
-    navigator.clipboard.writeText(url).then(() => {
+    
+    try {
+      await sharePost({
+        title,
+        text: description,
+        url
+      })
+    } catch (error) {
+      console.error('Error sharing:', error)
+      // Show a user-friendly message
       alert('Link copied to clipboard!')
-    }).catch(() => {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea')
-      textArea.value = url
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      alert('Link copied to clipboard!')
-    })
+    }
   }
 
   const handleSave = async () => {
     if (!user) {
-      alert('Please sign in to save stories!')
+      alert('Please sign in to save posts')
       return
     }
-    
+
+    setSaveLoading(true)
     try {
-      // This would integrate with the actual save API
-      setIsSaved(!isSaved)
-      alert(isSaved ? 'Story removed from favorites' : 'Story saved to favorites!')
+      const result = await toggleSavePost(user.uid, postId, title, slug)
+      setIsSaved(result.saved)
     } catch (error) {
-      console.error('Error saving story:', error)
-      alert('Failed to save story')
+      console.error('Error saving post:', error)
+      alert('Unable to save post. Please try again.')
+    } finally {
+      setSaveLoading(false)
     }
   }
 
