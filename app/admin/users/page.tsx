@@ -23,7 +23,6 @@ import {
   Filter
 } from 'lucide-react'
 import Link from 'next/link'
-import { createClientComponentClient } from '@/lib/supabase'
 
 interface User {
   id: string
@@ -52,7 +51,6 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showUserDialog, setShowUserDialog] = useState(false)
 
-  const supabase = createClientComponentClient()
 
   useEffect(() => {
     // Check if user is admin
@@ -98,50 +96,10 @@ export default function AdminUsersPage() {
 
   const loadUsers = async () => {
     try {
-      // Get users with additional statistics
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error loading users:', error)
-        return
-      }
-
-      // Get additional stats for each user
-      const usersWithStats = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          // Get post count
-          const { count: postCount } = await supabase
-            .from('blog_posts')
-            .select('id', { count: 'exact' })
-            .eq('author_id', profile.id)
-
-          // Get comment count
-          const { count: commentCount } = await supabase
-            .from('comments')
-            .select('id', { count: 'exact' })
-            .eq('user_id', profile.id)
-
-          // Get like count (likes given by user)
-          const { count: likeCount } = await supabase
-            .from('likes')
-            .select('id', { count: 'exact' })
-            .eq('user_id', profile.id)
-
-          return {
-            ...profile,
-            is_active: true, // Default to active
-            role: profile.email === 'utopaiblog@gmail.com' ? 'admin' as const : 'user' as const,
-            post_count: postCount || 0,
-            comment_count: commentCount || 0,
-            like_count: likeCount || 0
-          }
-        })
-      )
-
-      setUsers(usersWithStats)
+      // TODO: Load users from Firebase Auth
+      // For now, show empty data to prevent build errors
+      const dummyUsers: User[] = []
+      setUsers(dummyUsers)
     } catch (error) {
       console.error('Error loading users:', error)
     }
@@ -172,28 +130,9 @@ export default function AdminUsersPage() {
     }
 
     try {
-      // Delete user's likes first
-      await supabase.from('likes').delete().eq('user_id', userId)
-      
-      // Delete user's comments
-      await supabase.from('comments').delete().eq('user_id', userId)
-      
-      // Delete user's posts
-      await supabase.from('blog_posts').delete().eq('author_id', userId)
-      
-      // Delete user profile
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId)
-
-      if (error) {
-        console.error('Error deleting user:', error)
-        return
-      }
-
-      // Update local state
-      setUsers(users.filter(user => user.id !== userId))
+      // TODO: Implement Firebase user deletion
+      console.log('Firebase user deletion not implemented yet:', userId)
+      alert('User deletion moved to Firebase - coming soon!')
     } catch (error) {
       console.error('Error deleting user:', error)
     }

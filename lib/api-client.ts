@@ -1,17 +1,25 @@
-import { supabase } from './supabase'
+import { auth } from './firebase'
+import { getIdToken } from 'firebase/auth'
 
 // Utility for making authenticated API requests from client-side
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   try {
-    // Get current session token for authorization
-    const { data: { session } } = await supabase.auth.getSession()
+    // Get current Firebase user token for authorization
+    const user = auth.currentUser
+    let idToken = null
+    
+    if (user) {
+      idToken = await getIdToken(user)
+    }
     
     const defaultOptions: RequestInit = {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(session?.access_token ? { 
-          'authorization': `Bearer ${session.access_token}` 
+        ...(idToken ? { 
+          'authorization': `Bearer ${idToken}`,
+          'x-user-id': user?.uid || '',
+          'x-user-email': user?.email || ''
         } : {}),
         ...options.headers,
       },

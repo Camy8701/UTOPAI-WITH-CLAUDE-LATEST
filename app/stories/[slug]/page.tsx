@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft } from "lucide-react"
-import { createServerComponentClient } from "@/lib/supabase-server"
 import { notFound } from "next/navigation"
 import { StoryInteractions } from "@/components/story-interactions"
 
@@ -21,52 +20,11 @@ interface BlogPost {
   } | null
 }
 
-// Fetch story from database with like count
+// TODO: Fetch story from Firebase/static data
 async function getStory(slug: string): Promise<BlogPost & { like_count?: number } | null> {
-  const supabase = await createServerComponentClient()
-  
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select(`
-      id,
-      title,
-      content,
-      excerpt,
-      slug,
-      thumbnail_url,
-      created_at,
-      content_type,
-      author_id,
-      profiles!blog_posts_author_id_fkey (
-        full_name
-      )
-    `)
-    .eq('slug', slug)
-    .eq('published', true)
-    .eq('content_type', 'story')
-    .single()
-
-  if (error) {
-    console.error('Error fetching story:', error)
-    return null
-  }
-
-  // Get like count for this post
-  const { count: likeCount } = await supabase
-    .from('likes')
-    .select('*', { count: 'exact', head: true })
-    .eq('post_id', data.id)
-
-  // Fix profiles type issue - database returns array but type expects single object
-  const fixedData = {
-    ...data,
-    profiles: Array.isArray(data.profiles) && data.profiles.length > 0 
-      ? data.profiles[0] 
-      : null,
-    like_count: likeCount || 0
-  }
-  
-  return fixedData
+  // For now, return null to show 404 - Firebase integration coming soon
+  console.log('Story lookup not implemented yet for slug:', slug)
+  return null
 }
 
 // Generate metadata for the page

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,7 +45,6 @@ interface BlogPost {
 
 export default function PostsPage() {
   const router = useRouter()
-  const supabase = createClientComponentClient()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [posts, setPosts] = useState<BlogPost[]>([])
@@ -79,26 +77,13 @@ export default function PostsPage() {
     { value: "article", label: "Article", icon: "📝" },
   ]
 
-  // Load posts from database
+  // Load posts from static data (Firebase migration in progress)
   const loadPosts = async () => {
     try {
       setIsLoading(true)
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select(`
-          *,
-          profiles!blog_posts_author_id_fkey (
-            full_name
-          )
-        `)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error loading posts:', error)
-        return
-      }
-
-      setPosts(data || [])
+      // TODO: Replace with Firebase-based posts when ready
+      const staticPosts: BlogPost[] = []
+      setPosts(staticPosts)
     } catch (error) {
       console.error('Error loading posts:', error)
     } finally {
@@ -233,30 +218,10 @@ export default function PostsPage() {
         audio_url: audioUrl || null,
       }
 
-      if (editingPost) {
-        // Update existing post
-        const { error } = await supabase
-          .from('blog_posts')
-          .update(postData)
-          .eq('id', editingPost.id)
-
-        if (error) {
-          console.error('Error updating post:', error)
-          alert('Failed to update post. Please try again.')
-          return
-        }
-      } else {
-        // Create new post
-        const { error } = await supabase
-          .from('blog_posts')
-          .insert([postData])
-
-        if (error) {
-          console.error('Error creating post:', error)
-          alert('Failed to create post. Please try again.')
-          return
-        }
-      }
+      // TODO: Implement Firebase post creation/updating
+      console.log('Firebase post operations not implemented yet:', postData)
+      alert('Post operations moved to Firebase - coming soon!')
+      return
 
       // Reload posts
       await loadPosts()
@@ -273,19 +238,9 @@ export default function PostsPage() {
 
   const handleDeletePost = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('blog_posts')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        console.error('Error deleting post:', error)
-        alert('Failed to delete post. Please try again.')
-        return
-      }
-
-      // Reload posts
-      await loadPosts()
+      // TODO: Implement Firebase post deletion
+      console.log('Firebase post deletion not implemented yet:', id)
+      alert('Post deletion moved to Firebase - coming soon!')
       
       setDeleteDialogOpen(false)
       setPostToDelete(null)
@@ -297,22 +252,9 @@ export default function PostsPage() {
 
   const handleToggleStatus = async (id: string) => {
     try {
-      const post = posts.find(p => p.id === id)
-      if (!post) return
-
-      const { error } = await supabase
-        .from('blog_posts')
-        .update({ published: !post.published })
-        .eq('id', id)
-
-      if (error) {
-        console.error('Error updating post status:', error)
-        alert('Failed to update post status. Please try again.')
-        return
-      }
-
-      // Reload posts
-      await loadPosts()
+      // TODO: Implement Firebase post status toggling
+      console.log('Firebase post status toggle not implemented yet:', id)
+      alert('Post status changes moved to Firebase - coming soon!')
     } catch (error) {
       console.error('Error updating post status:', error)
       alert('Failed to update post status. Please try again.')
