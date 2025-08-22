@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Shield, Lock } from "lucide-react"
+import { Eye, EyeOff, Shield } from "lucide-react"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("")
@@ -61,21 +61,6 @@ export default function AdminLoginPage() {
             <CardDescription className="text-center">Enter your admin credentials to continue</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Credentials Info */}
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-center mb-2">
-                <Lock className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
-                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Admin Credentials</span>
-              </div>
-              <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                <div>
-                  <strong>Email:</strong> utopaiblog@gmail.com
-                </div>
-                <div>
-                  <strong>Password:</strong> Admin123!
-                </div>
-              </div>
-            </div>
 
             {error && (
               <Alert className="mb-4 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
