@@ -1,184 +1,165 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import type { Database } from '@/types/database'
 
-type BlogPost = Database['public']['Tables']['blog_posts']['Row']
-type BlogPostInsert = Database['public']['Tables']['blog_posts']['Insert']
-
-async function createSupabaseServer() {
-  try {
-    const cookieStore = await cookies()
-    
-    // Check environment variables
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!url || !key) {
-      console.error('Missing Supabase environment variables:', { hasUrl: !!url, hasKey: !!key })
-      throw new Error('Supabase configuration is missing')
-    }
-    
-    return createServerClient<Database>(
-      url,
-      key,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.delete({ name, ...options })
-          },
-        },
-      }
-    )
-  } catch (error) {
-    console.error('Failed to create Supabase server client:', error)
-    throw error
+// Temporary static blog posts data until we decide on final data strategy
+const STATIC_BLOG_POSTS = [
+  {
+    id: "1",
+    title: "The Future of AI: Beyond ChatGPT",
+    excerpt: "Exploring the next generation of artificial intelligence and what it means for humanity.",
+    content: "Artificial intelligence has come a long way since the early days of rule-based systems...",
+    slug: "future-of-ai-beyond-chatgpt",
+    author_id: "1",
+    category: "AI Trends",
+    content_type: "story",
+    section: "featured-stories",
+    published: true,
+    featured: true,
+    created_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-01-15T10:00:00Z",
+    image_url: "/ai-consciousness-story.png",
+    read_time: 8,
+    tags: ["AI", "Technology", "Future"],
+    view_count: 1234,
+    like_count: 89,
+    comment_count: 23
+  },
+  {
+    id: "2", 
+    title: "Google's Gemini: The AI Revolution Continues",
+    excerpt: "A deep dive into Google's latest AI breakthrough and its implications.",
+    content: "Google's Gemini represents a significant leap forward in AI capabilities...",
+    slug: "google-gemini-ai-breakthrough",
+    author_id: "1",
+    category: "AI News",
+    content_type: "news",
+    section: "best-ai-tools", 
+    published: true,
+    featured: false,
+    created_at: "2024-01-14T15:30:00Z",
+    updated_at: "2024-01-14T15:30:00Z",
+    image_url: "/google-gemini-news.png",
+    read_time: 6,
+    tags: ["Google", "Gemini", "AI"],
+    view_count: 892,
+    like_count: 67,
+    comment_count: 15
+  },
+  {
+    id: "3",
+    title: "Meta's AI Breaking Language Barriers", 
+    excerpt: "How Meta's new AI is preserving rare languages and connecting cultures.",
+    content: "Meta's latest AI initiative focuses on preserving endangered languages...",
+    slug: "meta-ai-language-preservation",
+    author_id: "1",
+    category: "AI Impact",
+    content_type: "story",
+    section: "featured-stories",
+    published: true,
+    featured: true,
+    created_at: "2024-01-13T09:15:00Z",
+    updated_at: "2024-01-13T09:15:00Z", 
+    image_url: "/meta-ai-rare-languages.png",
+    read_time: 7,
+    tags: ["Meta", "Languages", "Culture"],
+    view_count: 756,
+    like_count: 94,
+    comment_count: 18
+  },
+  {
+    id: "4",
+    title: "NVIDIA's AI Chip Revolution",
+    excerpt: "How NVIDIA's latest AI chips are transforming computing power worldwide.",
+    content: "NVIDIA continues to lead the AI hardware revolution with groundbreaking chip designs...",
+    slug: "nvidia-ai-chip-revolution",
+    author_id: "1",
+    category: "Hardware",
+    content_type: "news",
+    section: "best-ai-tools",
+    published: true,
+    featured: false,
+    created_at: "2024-01-12T14:20:00Z",
+    updated_at: "2024-01-12T14:20:00Z",
+    image_url: "/nvidia-ai-chip.png",
+    read_time: 5,
+    tags: ["NVIDIA", "Hardware", "AI Chips"],
+    view_count: 654,
+    like_count: 45,
+    comment_count: 12
+  },
+  {
+    id: "5",
+    title: "UK's New AI Safety Policies",
+    excerpt: "Examining the UK's latest approach to AI regulation and safety standards.",
+    content: "The United Kingdom has announced comprehensive AI safety policies...",
+    slug: "uk-ai-safety-policies",
+    author_id: "1", 
+    category: "Policy",
+    content_type: "news",
+    section: "best-ai-tools",
+    published: true,
+    featured: false,
+    created_at: "2024-01-11T11:45:00Z",
+    updated_at: "2024-01-11T11:45:00Z",
+    image_url: "/uk-ai-safety-policy.png",
+    read_time: 6,
+    tags: ["Policy", "Safety", "UK"],
+    view_count: 432,
+    like_count: 38,
+    comment_count: 9
   }
-}
+]
 
 // GET /api/blog-posts - Get all blog posts with optional filtering
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const section = searchParams.get('section')
+    const featured = searchParams.get('featured') === 'true'
+    const limit = parseInt(searchParams.get('limit') || '10')
     const category = searchParams.get('category')
-    const featured = searchParams.get('featured')
-    const published = searchParams.get('published')
-    const limit = searchParams.get('limit')
 
-    const supabase = await createSupabaseServer()
-    
-    let query = supabase
-      .from('blog_posts')
-      .select(`
-        *,
-        profiles!blog_posts_author_id_fkey(full_name, avatar_url)
-      `)
-      .order('created_at', { ascending: false })
+    let filteredPosts = [...STATIC_BLOG_POSTS]
 
-    // Apply filters
-    if (section) query = query.eq('section', section)
-    if (category) query = query.eq('category', category)
-    if (featured) query = query.eq('featured', featured === 'true')
-    if (published !== null) query = query.eq('published', published !== 'false')
-    if (limit) query = query.limit(parseInt(limit))
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Error fetching blog posts:', error)
-      
-      // Check if it's a table not found error or permission error (database not set up)
-      if (error.code === 'PGRST116' || error.code === '42P01' || error.message?.includes('relation') || error.message?.includes('does not exist')) {
-        console.log('Blog posts table not found or not accessible, returning empty array')
-        return NextResponse.json({ posts: [] })
-      }
-      
-      // For production, return empty array instead of 500 error to prevent infinite loops
-      if (process.env.NODE_ENV === 'production') {
-        console.log('Production: Returning empty array for any database error to prevent infinite loops')
-        return NextResponse.json({ posts: [] })
-      }
-      
-      return NextResponse.json(
-        { error: 'Failed to fetch blog posts', details: error.message },
-        { status: 500 }
-      )
+    // Filter by section
+    if (section) {
+      filteredPosts = filteredPosts.filter(post => post.section === section)
     }
 
-    return NextResponse.json({ posts: data || [] })
+    // Filter by featured
+    if (featured) {
+      filteredPosts = filteredPosts.filter(post => post.featured === true)
+    }
+
+    // Filter by category
+    if (category) {
+      filteredPosts = filteredPosts.filter(post => post.category === category)
+    }
+
+    // Apply limit
+    filteredPosts = filteredPosts.slice(0, limit)
+
+    return NextResponse.json({
+      posts: filteredPosts,
+      total: filteredPosts.length
+    })
+
   } catch (error) {
-    console.error('API error:', error)
-    
-    // In production, return empty array to prevent infinite retry loops
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Production: Returning empty array for catch block to prevent infinite loops')
-      return NextResponse.json({ posts: [] })
-    }
-    
+    console.error('Blog posts API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        posts: [],
+        total: 0,
+        error: 'Failed to fetch blog posts'
+      },
       { status: 500 }
     )
   }
 }
 
-// POST /api/blog-posts - Create a new blog post
+// POST /api/blog-posts - Create a new blog post (admin only)
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createSupabaseServer()
-    
-    // Check if user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
-
-    const body = await request.json()
-    
-    // Validate required fields
-    const { title, content, section, category, content_type } = body
-    if (!title || !content || !section || !category || !content_type) {
-      return NextResponse.json(
-        { error: 'Missing required fields: title, content, section, category, content_type' },
-        { status: 400 }
-      )
-    }
-
-    // Create slug from title
-    const slug = title.toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim('-')
-
-    const postData: BlogPostInsert = {
-      title,
-      content,
-      excerpt: body.excerpt || content.substring(0, 200) + '...',
-      slug: `${slug}-${Date.now()}`, // Add timestamp to ensure uniqueness
-      author_id: user.id,
-      category,
-      content_type,
-      section,
-      published: body.published || false,
-      featured: body.featured || false,
-      thumbnail_url: body.thumbnail_url || null,
-      audio_url: body.audio_url || null,
-      video_url: body.video_url || null,
-      read_time: body.read_time || null,
-      published_at: body.published && body.published_at ? body.published_at : null,
-    }
-
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .insert(postData)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating blog post:', error)
-      return NextResponse.json(
-        { error: 'Failed to create blog post' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ post: data }, { status: 201 })
-  } catch (error) {
-    console.error('API error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json(
+    { error: 'Blog post creation not implemented yet' },
+    { status: 501 }
+  )
 }
