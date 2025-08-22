@@ -18,40 +18,23 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { FileText, Plus, Search, Filter, Edit, Trash2, Eye, Calendar, User, Tag, Save, X, Globe } from "lucide-react"
-
-interface BlogPost {
-  id: string
-  title: string
-  excerpt: string | null
-  content: string
-  content_type: "story" | "news" | "tool" | "article"
-  published: boolean
-  slug: string
-  author_id: string
-  thumbnail_url?: string | null
-  audio_url?: string | null
-  view_count?: number
-  like_count?: number
-  comment_count?: number
-  created_at: string
-  updated_at: string
-  profiles?: {
-    full_name: string | null
-  }
-}
-
-// Real database integration will replace mock data
+import { FileText, Plus, Search, Filter, Edit, Trash2, Eye, Calendar, User, Tag, Save, X, Globe, Upload, Image as ImageIcon, Music } from "lucide-react"
+import { useFirebaseAuth } from "@/components/firebase-auth-provider"
+import { BlogPostsAdmin, BlogPost, POST_CATEGORIES, uploadFile, generateSlug } from "@/lib/firebase-admin"
+import { toast } from "sonner"
 
 export default function PostsPage() {
   const router = useRouter()
+  const { user } = useFirebaseAuth()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [contentTypeFilter, setContentTypeFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
   const [showEditor, setShowEditor] = useState(false)
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -62,11 +45,14 @@ export default function PostsPage() {
     title: "",
     excerpt: "",
     content: "",
+    category: "AI Stories",
     content_type: "story" as "story" | "news" | "tool" | "article",
     published: false,
+    featured: false,
     slug: "",
-    thumbnail_url: "",
-    audio_url: "",
+    tags: [] as string[],
+    tagInput: "",
+    thumbnailFile: null as File | null,
     audioFile: null as File | null,
   })
 
@@ -77,15 +63,15 @@ export default function PostsPage() {
     { value: "article", label: "Article", icon: "📝" },
   ]
 
-  // Load posts from static data (Firebase migration in progress)
+  // Load posts from Firebase
   const loadPosts = async () => {
     try {
       setIsLoading(true)
-      // TODO: Replace with Firebase-based posts when ready
-      const staticPosts: BlogPost[] = []
-      setPosts(staticPosts)
+      const firebasePosts = await BlogPostsAdmin.getAllPosts()
+      setPosts(firebasePosts)
     } catch (error) {
       console.error('Error loading posts:', error)
+      toast.error('Failed to load posts')
     } finally {
       setIsLoading(false)
     }
@@ -131,8 +117,13 @@ export default function PostsPage() {
       filtered = filtered.filter((post) => post.content_type === contentTypeFilter)
     }
 
+    // Filter by category
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((post) => post.category === categoryFilter)
+    }
+
     setFilteredPosts(filtered)
-  }, [posts, searchTerm, statusFilter, contentTypeFilter])
+  }, [posts, searchTerm, statusFilter, contentTypeFilter, categoryFilter])
 
   const handleCreatePost = () => {
     setEditingPost(null)
@@ -140,11 +131,14 @@ export default function PostsPage() {
       title: "",
       excerpt: "",
       content: "",
+      category: "AI Stories",
       content_type: "story",
       published: false,
+      featured: false,
       slug: "",
-      thumbnail_url: "",
-      audio_url: "",
+      tags: [],
+      tagInput: "",
+      thumbnailFile: null,
       audioFile: null,
     })
     setShowEditor(true)
@@ -156,72 +150,74 @@ export default function PostsPage() {
       title: post.title,
       excerpt: post.excerpt || "",
       content: post.content,
+      category: post.category,
       content_type: post.content_type,
       published: post.published,
+      featured: post.featured || false,
       slug: post.slug,
-      thumbnail_url: post.thumbnail_url || "",
-      audio_url: post.audio_url || "",
+      tags: post.tags || [],
+      tagInput: "",
+      thumbnailFile: null,
       audioFile: null,
     })
     setShowEditor(true)
   }
 
-  const handleFileUpload = async (file: File, type: 'audio' | 'video'): Promise<string> => {
-    // In production, you would upload to a file storage service like:
-    // - AWS S3
-    // - Cloudinary
-    // - Your server's upload endpoint
-    
-    // For now, we'll simulate file upload and return a mock URL
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const mockUrl = `https://utopai.blog/uploads/${type}/${Date.now()}-${file.name}`
-        resolve(mockUrl)
-      }, 1000)
-    })
-  }
-
   const handleSavePost = async () => {
     if (!editorData.title.trim()) {
-      alert("Please enter a title for the post")
+      toast.error("Please enter a title for the post")
+      return
+    }
+
+    if (!user) {
+      toast.error("You must be logged in to create posts")
       return
     }
 
     try {
-      setIsLoading(true)
+      setIsSaving(true)
       
       // Generate slug from title if not provided
-      const slug = editorData.slug.trim() || editorData.title.trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '')
+      const slug = editorData.slug.trim() || generateSlug(editorData.title)
 
-      // Handle file upload if needed
-      let audioUrl = editorData.audio_url
-      if (editorData.audioFile) {
-        audioUrl = await handleFileUpload(editorData.audioFile, 'audio')
+      let thumbnailUrl = ""
+      let audioUrl = ""
+
+      // Upload thumbnail if provided
+      if (editorData.thumbnailFile) {
+        thumbnailUrl = await uploadFile(editorData.thumbnailFile, 'thumbnails')
       }
 
-      // Get current user - for now we'll use a default admin user ID
-      // In production, you'd get this from the actual authenticated user
-      const adminUserId = 'eed7219e-4647-4218-9df4-b8b1afeba7ea' // Default admin user
+      // Upload audio if provided  
+      if (editorData.audioFile) {
+        audioUrl = await uploadFile(editorData.audioFile, 'audio')
+      }
 
-      const postData = {
+      const postData: Omit<BlogPost, 'id'> = {
         title: editorData.title.trim(),
-        excerpt: editorData.excerpt.trim() || null,
+        excerpt: editorData.excerpt.trim() || undefined,
         content: editorData.content.trim(),
+        category: editorData.category,
         content_type: editorData.content_type,
         published: editorData.published,
+        featured: editorData.featured,
         slug: slug,
-        author_id: adminUserId,
-        thumbnail_url: editorData.thumbnail_url.trim() || null,
-        audio_url: audioUrl || null,
+        author_id: user.uid,
+        author_name: user.displayName || user.email || 'Admin',
+        tags: editorData.tags,
+        thumbnail_url: thumbnailUrl || editingPost?.thumbnail_url,
+        audio_url: audioUrl || editingPost?.audio_url,
       }
 
-      // TODO: Implement Firebase post creation/updating
-      console.log('Firebase post operations not implemented yet:', postData)
-      alert('Post operations moved to Firebase - coming soon!')
-      return
+      if (editingPost) {
+        // Update existing post
+        await BlogPostsAdmin.updatePost(editingPost.id!, postData)
+        toast.success("Post updated successfully!")
+      } else {
+        // Create new post
+        await BlogPostsAdmin.createPost(postData)
+        toast.success("Post created successfully!")
+      }
 
       // Reload posts
       await loadPosts()
@@ -230,35 +226,59 @@ export default function PostsPage() {
       setEditingPost(null)
     } catch (error) {
       console.error('Error saving post:', error)
-      alert('Failed to save post. Please try again.')
+      toast.error('Failed to save post. Please try again.')
     } finally {
-      setIsLoading(false)
+      setIsSaving(false)
     }
   }
 
   const handleDeletePost = async (id: string) => {
     try {
-      // TODO: Implement Firebase post deletion
-      console.log('Firebase post deletion not implemented yet:', id)
-      alert('Post deletion moved to Firebase - coming soon!')
+      await BlogPostsAdmin.deletePost(id)
+      toast.success("Post deleted successfully!")
+      
+      // Reload posts
+      await loadPosts()
       
       setDeleteDialogOpen(false)
       setPostToDelete(null)
     } catch (error) {
       console.error('Error deleting post:', error)
-      alert('Failed to delete post. Please try again.')
+      toast.error('Failed to delete post. Please try again.')
     }
   }
 
   const handleToggleStatus = async (id: string) => {
     try {
-      // TODO: Implement Firebase post status toggling
-      console.log('Firebase post status toggle not implemented yet:', id)
-      alert('Post status changes moved to Firebase - coming soon!')
+      const post = posts.find(p => p.id === id)
+      if (!post) return
+
+      await BlogPostsAdmin.updatePost(id, { published: !post.published })
+      toast.success(`Post ${post.published ? 'unpublished' : 'published'} successfully!`)
+      
+      // Reload posts
+      await loadPosts()
     } catch (error) {
       console.error('Error updating post status:', error)
-      alert('Failed to update post status. Please try again.')
+      toast.error('Failed to update post status. Please try again.')
     }
+  }
+
+  const addTag = () => {
+    if (editorData.tagInput.trim() && !editorData.tags.includes(editorData.tagInput.trim())) {
+      setEditorData(prev => ({
+        ...prev,
+        tags: [...prev.tags, prev.tagInput.trim()],
+        tagInput: ""
+      }))
+    }
+  }
+
+  const removeTag = (tagToRemove: string) => {
+    setEditorData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }))
   }
 
   const getStatusColor = (published: boolean) => {
@@ -345,7 +365,6 @@ export default function PostsPage() {
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="published">Published</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
@@ -361,11 +380,25 @@ export default function PostsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {POST_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Button
                 onClick={() => {
                   setSearchTerm("")
                   setStatusFilter("all")
                   setContentTypeFilter("all")
+                  setCategoryFilter("all")
                 }}
                 variant="outline"
               >
@@ -449,16 +482,22 @@ export default function PostsPage() {
                       <Badge variant="outline" className="text-xs">
                         {contentTypes.find(ct => ct.value === post.content_type)?.icon} {post.content_type}
                       </Badge>
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                        {post.category}
+                      </Badge>
+                      {post.featured && (
+                        <Badge className="bg-yellow-100 text-yellow-800 text-xs">Featured</Badge>
+                      )}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-2">{post.excerpt}</p>
                     <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mb-2">
                       <span className="flex items-center gap-1">
                         <User className="h-3 w-3" />
-                        {post.profiles?.full_name || 'Admin'}
+                        {post.author_name || 'Admin'}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(post.created_at).toLocaleDateString()}
+                        {post.created_at ? new Date(post.created_at.seconds * 1000).toLocaleDateString() : 'N/A'}
                       </span>
                       <span className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
@@ -476,13 +515,27 @@ export default function PostsPage() {
                           🖼️ Thumbnail
                         </Badge>
                       )}
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex gap-1">
+                          {post.tags.slice(0, 3).map(tag => (
+                            <Badge key={tag} variant="outline" className="text-xs">
+                              #{tag}
+                            </Badge>
+                          ))}
+                          {post.tags.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{post.tags.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleToggleStatus(post.id)}
+                      onClick={() => handleToggleStatus(post.id!)}
                       className={`flex items-center gap-1 ${
                         post.published
                           ? "text-orange-600 hover:text-orange-700"
@@ -504,7 +557,7 @@ export default function PostsPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        setPostToDelete(post.id)
+                        setPostToDelete(post.id!)
                         setDeleteDialogOpen(true)
                       }}
                       className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -520,11 +573,11 @@ export default function PostsPage() {
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 dark:text-gray-400 mb-2">
-                    {searchTerm || statusFilter !== "all" || contentTypeFilter !== "all"
+                    {searchTerm || statusFilter !== "all" || contentTypeFilter !== "all" || categoryFilter !== "all"
                       ? "No posts found matching your criteria."
                       : "No posts yet. Create your first post!"}
                   </p>
-                  {!searchTerm && statusFilter === "all" && contentTypeFilter === "all" && (
+                  {!searchTerm && statusFilter === "all" && contentTypeFilter === "all" && categoryFilter === "all" && (
                     <Button onClick={handleCreatePost} className="mt-4">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Post
@@ -572,107 +625,78 @@ export default function PostsPage() {
               </div>
 
               <div>
-                <Label htmlFor="content">Content</Label>
+                <Label htmlFor="content">Content *</Label>
                 <Textarea
                   id="content"
                   value={editorData.content}
                   onChange={(e) => setEditorData((prev) => ({ ...prev, content: e.target.value }))}
                   placeholder="Write your post content here..."
-                  rows={8}
+                  rows={12}
                   className="font-mono text-sm"
                 />
               </div>
 
-              {/* Media URLs */}
+              {/* Media Upload */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="thumbnailUrl">Thumbnail Image URL</Label>
+                  <Label htmlFor="thumbnailFile">Thumbnail Image</Label>
                   <Input
-                    id="thumbnailUrl"
-                    value={editorData.thumbnail_url}
-                    onChange={(e) => setEditorData((prev) => ({ ...prev, thumbnail_url: e.target.value }))}
-                    placeholder="https://example.com/image.jpg"
+                    id="thumbnailFile"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setEditorData((prev) => ({ ...prev, thumbnailFile: file }))
+                    }}
                   />
+                  {editorData.thumbnailFile && (
+                    <p className="text-sm text-green-600 mt-1">
+                      <ImageIcon className="inline h-3 w-3 mr-1" />
+                      {editorData.thumbnailFile.name}
+                    </p>
+                  )}
                 </div>
+
                 <div>
-                  <Label htmlFor="audioUrl">Audio URL (for Listen feature)</Label>
+                  <Label htmlFor="audioFile">Audio File</Label>
                   <Input
-                    id="audioUrl"
-                    value={editorData.audio_url}
-                    onChange={(e) => setEditorData((prev) => ({ ...prev, audio_url: e.target.value }))}
-                    placeholder="https://example.com/audio.mp3"
+                    id="audioFile"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setEditorData((prev) => ({ ...prev, audioFile: file }))
+                    }}
                   />
+                  {editorData.audioFile && (
+                    <p className="text-sm text-green-600 mt-1">
+                      <Music className="inline h-3 w-3 mr-1" />
+                      {editorData.audioFile.name}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Audio Upload Section */}
-              {(editorData.content_type === "story") && (
-                <div className="space-y-4 p-4 border rounded-lg bg-green-50 dark:bg-green-900/20">
-                  <h4 className="font-medium text-green-800 dark:text-green-200 flex items-center gap-2">
-                    🎵 Audio Content (for "Listen" button)
-                  </h4>
-                  
-                  <div>
-                    <Label htmlFor="audioFile">Upload Audio File</Label>
-                    <Input
-                      id="audioFile"
-                      type="file"
-                      accept="audio/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null
-                        setEditorData((prev) => ({ ...prev, audioFile: file }))
-                      }}
-                      className="mb-2"
-                    />
-                    {editorData.audioFile && (
-                      <p className="text-sm text-green-600 dark:text-green-400">
-                        Selected: {editorData.audioFile.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="text-sm text-gray-600 dark:text-gray-400">OR</div>
-
-                  <div>
-                    <Label htmlFor="audioUrlAlt">Audio URL (if hosted elsewhere)</Label>
-                    <Input
-                      id="audioUrlAlt"
-                      value={editorData.audio_url}
-                      onChange={(e) => setEditorData((prev) => ({ ...prev, audio_url: e.target.value }))}
-                      placeholder="https://example.com/audio.mp3"
-                    />
-                  </div>
+              {/* Tags */}
+              <div>
+                <Label>Tags</Label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    value={editorData.tagInput}
+                    onChange={(e) => setEditorData(prev => ({ ...prev, tagInput: e.target.value }))}
+                    placeholder="Add a tag..."
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  />
+                  <Button type="button" onClick={addTag} size="sm">Add</Button>
                 </div>
-              )}
-
-              {/* Video Upload Section */}
-              {editorData.content_type === "tool" && (
-                <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                  <h4 className="font-medium text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                    ⚡ AI Tool Content
-                  </h4>
-                  
-                  <div>
-                    <Label htmlFor="toolUrl">Tool Demo/Website URL</Label>
-                    <Input
-                      id="toolUrl"
-                      value={editorData.thumbnail_url || ''}
-                      onChange={(e) => setEditorData((prev) => ({ ...prev, thumbnail_url: e.target.value }))}
-                      placeholder="https://tool-website.com"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="toolDescription">Additional Tool Info</Label>
-                    <Input
-                      id="toolDescription"
-                      value={editorData.excerpt}
-                      onChange={(e) => setEditorData((prev) => ({ ...prev, excerpt: e.target.value }))}
-                      placeholder="Brief description of the AI tool features"
-                    />
-                  </div>
+                <div className="flex flex-wrap gap-1">
+                  {editorData.tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
+                      #{tag} <X className="h-3 w-3 ml-1" />
+                    </Badge>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -685,6 +709,17 @@ export default function PostsPage() {
                   }
                 />
                 <Label htmlFor="publishedSwitch">Published</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="featuredSwitch"
+                  checked={editorData.featured}
+                  onCheckedChange={(checked) =>
+                    setEditorData((prev) => ({ ...prev, featured: checked }))
+                  }
+                />
+                <Label htmlFor="featuredSwitch">Featured</Label>
               </div>
 
               <div>
@@ -709,6 +744,27 @@ export default function PostsPage() {
               </div>
 
               <div>
+                <Label>Category</Label>
+                <Select
+                  value={editorData.category}
+                  onValueChange={(value) =>
+                    setEditorData((prev) => ({ ...prev, category: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {POST_CATEGORIES.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="slug">URL Slug (optional)</Label>
                 <Input
                   id="slug"
@@ -725,9 +781,18 @@ export default function PostsPage() {
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSavePost}>
-              <Save className="h-4 w-4 mr-2" />
-              {editingPost ? "Update Post" : "Create Post"}
+            <Button onClick={handleSavePost} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {editingPost ? "Update Post" : "Create Post"}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -739,7 +804,7 @@ export default function PostsPage() {
           <DialogHeader>
             <DialogTitle>Delete Post</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this post? This action cannot be undone.
+              Are you sure you want to delete this post? This will also delete all associated comments and likes. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getStorage, connectStorageEmulator } from 'firebase/storage'
 
 // Firebase configuration
 const firebaseConfig = {
@@ -21,6 +22,9 @@ export const auth = getAuth(app)
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app)
+
+// Initialize Firebase Storage and get a reference to the service
+export const storage = getStorage(app)
 
 // Development mode emulators (optional)
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {

@@ -20,55 +20,20 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
-
-interface Comment {
-  id: string
-  content: string
-  created_at: string
-  updated_at: string
-  post_id: string
-  user_id: string
-  like_count: number
-  parent_id: string | null
-  status: 'approved' | 'pending' | 'rejected'
-  profiles: {
-    full_name: string | null
-    avatar_url: string | null
-    email: string
-  }[] | {
-    full_name: string | null
-    avatar_url: string | null
-    email: string
-  } | null
-  blog_posts: {
-    title: string
-    slug: string
-  }[] | {
-    title: string
-    slug: string
-  } | null
-}
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
+import { CommentsAdmin, Comment } from '@/lib/firebase-admin'
+import { toast } from 'sonner'
 
 export default function AdminCommentsPage() {
   const router = useRouter()
+  const { user } = useFirebaseAuth()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [comments, setComments] = useState<Comment[]>([])
+  const [filteredComments, setFilteredComments] = useState<Comment[]>([])
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [editingComment, setEditingComment] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
-
-  // Helper function to safely access profile data
-  const getProfile = (profiles: any) => {
-    if (!profiles) return null
-    return Array.isArray(profiles) ? profiles[0] : profiles
-  }
-
-  // Helper function to safely access blog posts data
-  const getBlogPost = (blogPosts: any) => {
-    if (!blogPosts) return null
-    return Array.isArray(blogPosts) ? blogPosts[0] : blogPosts
-  }
 
   useEffect(() => {
     // Check if user is admin
@@ -92,23 +57,34 @@ export default function AdminCommentsPage() {
     }
   }, [isAuthorized])
 
+  useEffect(() => {
+    // Filter comments
+    let filtered = comments
+    if (filter !== 'all') {
+      filtered = comments.filter(comment => comment.status === filter)
+    }
+    setFilteredComments(filtered)
+  }, [comments, filter])
+
   const loadComments = async () => {
     try {
-      // Since we moved to Firebase for comments, this page needs to be updated
-      // For now, show dummy data to prevent build errors
-      const dummyComments: Comment[] = []
-      setComments(dummyComments)
+      setIsLoading(true)
+      const firebaseComments = await CommentsAdmin.getAllComments()
+      setComments(firebaseComments)
     } catch (error) {
       console.error('Error loading comments:', error)
+      toast.error('Failed to load comments')
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const updateCommentStatus = async (commentId: string, status: 'approved' | 'rejected') => {
     try {
-      // TODO: Implement Firebase comment moderation
-      console.log('Firebase comment moderation not implemented yet')
+      await CommentsAdmin.updateCommentStatus(commentId, status)
+      toast.success(`Comment ${status} successfully!`)
       
-      // Update local state for demo purposes
+      // Update local state
       setComments(comments.map(comment => 
         comment.id === commentId 
           ? { ...comment, status }
@@ -116,6 +92,7 @@ export default function AdminCommentsPage() {
       ))
     } catch (error) {
       console.error('Error updating comment status:', error)
+      toast.error('Failed to update comment status')
     }
   }
 
@@ -125,22 +102,23 @@ export default function AdminCommentsPage() {
     }
 
     try {
-      // TODO: Implement Firebase comment deletion
-      console.log('Firebase comment deletion not implemented yet')
+      await CommentsAdmin.deleteComment(commentId)
+      toast.success('Comment deleted successfully!')
       
-      // Update local state for demo purposes
+      // Update local state
       setComments(comments.filter(comment => comment.id !== commentId))
     } catch (error) {
       console.error('Error deleting comment:', error)
+      toast.error('Failed to delete comment')
     }
   }
 
   const updateCommentContent = async (commentId: string, newContent: string) => {
     try {
-      // TODO: Implement Firebase comment editing
-      console.log('Firebase comment editing not implemented yet')
+      await CommentsAdmin.updateComment(commentId, newContent)
+      toast.success('Comment updated successfully!')
       
-      // Update local state for demo purposes
+      // Update local state
       setComments(comments.map(comment => 
         comment.id === commentId 
           ? { ...comment, content: newContent }
@@ -151,6 +129,7 @@ export default function AdminCommentsPage() {
       setEditContent('')
     } catch (error) {
       console.error('Error updating comment:', error)
+      toast.error('Failed to update comment')
     }
   }
 
@@ -166,11 +145,6 @@ export default function AdminCommentsPage() {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
-
-  const filteredComments = comments.filter(comment => {
-    if (filter === 'all') return true
-    return comment.status === filter
-  })
 
   const stats = {
     total: comments.length,
@@ -316,21 +290,18 @@ export default function AdminCommentsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar>
-                        <AvatarImage src={getProfile(comment.profiles)?.avatar_url || undefined} />
+                        <AvatarImage src={comment.user_avatar || undefined} />
                         <AvatarFallback>
-                          {getProfile(comment.profiles)?.full_name?.[0] || getProfile(comment.profiles)?.email?.[0] || 'U'}
+                          {comment.user_name?.[0] || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h4 className="font-medium text-gray-900 dark:text-white">
-                          {getProfile(comment.profiles)?.full_name || getProfile(comment.profiles)?.email || 'Anonymous'}
+                          {comment.user_name || 'Anonymous'}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {getProfile(comment.profiles)?.email}
-                        </p>
                         <p className="text-xs text-gray-500">
-                          {new Date(comment.created_at).toLocaleDateString()} at{' '}
-                          {new Date(comment.created_at).toLocaleTimeString()}
+                          {comment.created_at ? new Date(comment.created_at.seconds * 1000).toLocaleDateString() : 'N/A'} at{' '}
+                          {comment.created_at ? new Date(comment.created_at.seconds * 1000).toLocaleTimeString() : 'N/A'}
                         </p>
                       </div>
                     </div>
@@ -342,20 +313,14 @@ export default function AdminCommentsPage() {
                 
                 <CardContent className="pt-0">
                   {/* Post Reference */}
-                  {getBlogPost(comment.blog_posts) && (
-                    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        Comment on:
-                      </p>
-                      <Link 
-                        href={`/blog/${getBlogPost(comment.blog_posts)?.slug}`}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                        target="_blank"
-                      >
-                        {getBlogPost(comment.blog_posts)?.title}
-                      </Link>
-                    </div>
-                  )}
+                  <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Comment on Post ID:
+                    </p>
+                    <p className="text-blue-600 hover:text-blue-700 font-medium">
+                      {comment.post_id}
+                    </p>
+                  </div>
 
                   {/* Comment Content */}
                   {editingComment === comment.id ? (
@@ -369,7 +334,7 @@ export default function AdminCommentsPage() {
                       <div className="flex space-x-2">
                         <Button 
                           size="sm" 
-                          onClick={() => updateCommentContent(comment.id, editContent)}
+                          onClick={() => updateCommentContent(comment.id!, editContent)}
                         >
                           Save Changes
                         </Button>
@@ -396,13 +361,9 @@ export default function AdminCommentsPage() {
                   {/* Comment Metadata */}
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <User className="h-4 w-4 mr-1" />
-                        {comment.like_count} likes
-                      </span>
-                      {comment.updated_at !== comment.created_at && (
+                      {comment.updated_at && comment.updated_at !== comment.created_at && (
                         <span className="text-xs">
-                          (edited {new Date(comment.updated_at).toLocaleDateString()})
+                          (edited {comment.updated_at ? new Date(comment.updated_at.seconds * 1000).toLocaleDateString() : 'N/A'})
                         </span>
                       )}
                     </div>
@@ -415,7 +376,7 @@ export default function AdminCommentsPage() {
                             size="sm" 
                             variant="outline"
                             className="text-green-600 hover:text-green-700"
-                            onClick={() => updateCommentStatus(comment.id, 'approved')}
+                            onClick={() => updateCommentStatus(comment.id!, 'approved')}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -424,7 +385,7 @@ export default function AdminCommentsPage() {
                             size="sm" 
                             variant="outline"
                             className="text-red-600 hover:text-red-700"
-                            onClick={() => updateCommentStatus(comment.id, 'rejected')}
+                            onClick={() => updateCommentStatus(comment.id!, 'rejected')}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Reject
@@ -437,7 +398,7 @@ export default function AdminCommentsPage() {
                           size="sm" 
                           variant="outline"
                           className="text-red-600 hover:text-red-700"
-                          onClick={() => updateCommentStatus(comment.id, 'rejected')}
+                          onClick={() => updateCommentStatus(comment.id!, 'rejected')}
                         >
                           <Flag className="h-4 w-4 mr-1" />
                           Flag
@@ -449,7 +410,7 @@ export default function AdminCommentsPage() {
                           size="sm" 
                           variant="outline"
                           className="text-green-600 hover:text-green-700"
-                          onClick={() => updateCommentStatus(comment.id, 'approved')}
+                          onClick={() => updateCommentStatus(comment.id!, 'approved')}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
                           Restore
@@ -460,7 +421,7 @@ export default function AdminCommentsPage() {
                         size="sm" 
                         variant="outline"
                         onClick={() => {
-                          setEditingComment(comment.id)
+                          setEditingComment(comment.id!)
                           setEditContent(comment.content)
                         }}
                       >
@@ -472,7 +433,7 @@ export default function AdminCommentsPage() {
                         size="sm" 
                         variant="outline"
                         className="text-red-600 hover:text-red-700"
-                        onClick={() => deleteComment(comment.id)}
+                        onClick={() => deleteComment(comment.id!)}
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         Delete
