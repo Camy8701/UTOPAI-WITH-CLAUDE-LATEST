@@ -49,7 +49,7 @@ export function StoryActionButtons({
   }, [user, postId])
 
   const handleComment = () => {
-    if (slug) {
+    if (slug && typeof window !== 'undefined') {
       window.open(`/stories/${slug}#comments`, '_blank')
     } else {
       alert('Comments not available for this story')

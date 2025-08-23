@@ -7,34 +7,46 @@ export interface ShareData {
 // Social media sharing functions
 export function shareOnFacebook(url: string, title?: string) {
   const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
-  window.open(facebookUrl, '_blank', 'width=600,height=400')
+  if (typeof window !== 'undefined') {
+    window.open(facebookUrl, '_blank', 'width=600,height=400')
+  }
 }
 
 export function shareOnTwitter(title: string, url: string) {
   const tweetText = encodeURIComponent(`${title} ${url}`)
-  window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank', 'width=600,height=400')
+  if (typeof window !== 'undefined') {
+    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank', 'width=600,height=400')
+  }
 }
 
 export function shareOnLinkedIn(title: string, url: string) {
   const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
-  window.open(linkedInUrl, '_blank', 'width=600,height=400')
+  if (typeof window !== 'undefined') {
+    window.open(linkedInUrl, '_blank', 'width=600,height=400')
+  }
 }
 
 export function shareOnWhatsApp(title: string, url: string) {
   const text = encodeURIComponent(`${title} ${url}`)
   const whatsappUrl = `https://wa.me/?text=${text}`
-  window.open(whatsappUrl, '_blank')
+  if (typeof window !== 'undefined') {
+    window.open(whatsappUrl, '_blank')
+  }
 }
 
 export function shareOnTelegram(title: string, url: string) {
   const text = encodeURIComponent(`${title} ${url}`)
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${text}`
-  window.open(telegramUrl, '_blank', 'width=600,height=400')
+  if (typeof window !== 'undefined') {
+    window.open(telegramUrl, '_blank', 'width=600,height=400')
+  }
 }
 
 export function shareOnReddit(title: string, url: string) {
   const redditUrl = `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
-  window.open(redditUrl, '_blank', 'width=600,height=400')
+  if (typeof window !== 'undefined') {
+    window.open(redditUrl, '_blank', 'width=600,height=400')
+  }
 }
 
 export function copyToClipboard(title: string, url: string) {

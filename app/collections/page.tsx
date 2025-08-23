@@ -157,7 +157,9 @@ export default function CollectionsPage() {
 
   const handleComment = (slug: string) => {
     // Navigate to story page with comment section
-    window.open(`/stories/${slug}#comments`, '_blank')
+    if (typeof window !== 'undefined') {
+      window.open(`/stories/${slug}#comments`, '_blank')
+    }
   }
 
   const handleStoryAction = (story: any, action: "read" | "listen") => {
