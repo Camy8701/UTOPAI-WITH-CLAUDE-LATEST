@@ -7,6 +7,7 @@ import { useFirebaseAuth } from './firebase-auth-provider'
 import { LikeButton } from './like-button'
 import { toggleSavePost, checkPostSaved } from '@/lib/firebase-saves'
 import { sharePost } from '@/lib/share-utils'
+import { SocialShareModal } from './social-share-modal'
 
 interface StoryActionButtonsProps {
   postId: string
@@ -36,6 +37,7 @@ export function StoryActionButtons({
   const { user } = useFirebaseAuth()
   const [isSaved, setIsSaved] = useState(false)
   const [saveLoading, setSaveLoading] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Check if post is saved when user changes
   useEffect(() => {
@@ -54,20 +56,8 @@ export function StoryActionButtons({
     }
   }
 
-  const handleShare = async () => {
-    const url = slug ? `${window.location.origin}/stories/${slug}` : window.location.href
-    
-    try {
-      await sharePost({
-        title,
-        text: description,
-        url
-      })
-    } catch (error) {
-      console.error('Error sharing:', error)
-      // Show a user-friendly message
-      alert('Link copied to clipboard!')
-    }
+  const handleShare = () => {
+    setShowShareModal(true)
   }
 
   const handleSave = async () => {
@@ -153,6 +143,15 @@ export function StoryActionButtons({
         <Bookmark className={`${iconSizes[size]} ${isSaved ? 'fill-current' : ''}`} />
         {!showCounts && <span>{isSaved ? 'Saved' : 'Save'}</span>}
       </motion.button>
+
+      {/* Social Share Modal */}
+      <SocialShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title={title}
+        url={slug ? `${window.location.origin}/stories/${slug}` : window.location.href}
+        description={description}
+      />
     </div>
   )
 }

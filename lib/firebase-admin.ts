@@ -85,14 +85,18 @@ export async function uploadFile(
     const filename = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`
     const fullPath = postId ? `${path}/${postId}/${filename}` : `${path}/${filename}`
     
+    console.log('Uploading to path:', fullPath)
     const storageRef = ref(storage, fullPath)
     const snapshot = await uploadBytes(storageRef, file)
+    console.log('Upload completed, getting download URL...')
     const downloadURL = await getDownloadURL(snapshot.ref)
+    console.log('Download URL obtained:', downloadURL)
     
     return downloadURL
   } catch (error) {
     console.error('Error uploading file:', error)
-    throw new Error('Failed to upload file')
+    console.error('Error details:', error.message)
+    throw new Error(`Failed to upload file: ${error.message}`)
   }
 }
 

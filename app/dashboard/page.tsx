@@ -20,7 +20,6 @@ import {
 } from 'lucide-react'
 
 interface UserStats {
-  totalLikes: number
   totalComments: number
   savedPosts: number
   quizScore: number
@@ -51,7 +50,6 @@ export default function Dashboard() {
       if (response.ok) {
         const data = await response.json()
         setStats({
-          totalLikes: data.likes_given || 0,
           totalComments: data.comments_posted || 0,
           savedPosts: data.saved_posts || 0,
           quizScore: profile?.quiz_points || 0,
@@ -60,7 +58,6 @@ export default function Dashboard() {
       } else {
         // Fallback to empty stats if API fails
         setStats({
-          totalLikes: 0,
           totalComments: 0,
           savedPosts: 0,
           quizScore: profile?.quiz_points || 0,
@@ -70,7 +67,6 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error loading user stats:', error)
       setStats({
-        totalLikes: 0,
         totalComments: 0,
         savedPosts: 0,
         quizScore: profile?.quiz_points || 0,
@@ -178,23 +174,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/20">
-                <Heart className="h-6 w-6 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Likes Given
-                </p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {loadingStats ? '...' : stats?.totalLikes || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
@@ -245,25 +225,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center mb-4">
-              <Heart className="h-6 w-6 text-red-600 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Liked Posts
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              View all the posts you've liked and shared your appreciation for.
-            </p>
-            <Link 
-              href="/liked-posts"
-              className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
-            >
-              View Liked Posts →
-            </Link>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center mb-4">
               <Bookmark className="h-6 w-6 text-green-600 mr-3" />

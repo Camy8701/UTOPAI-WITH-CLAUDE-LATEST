@@ -185,12 +185,28 @@ export default function PostsPage() {
 
       // Upload thumbnail if provided
       if (editorData.thumbnailFile) {
-        thumbnailUrl = await uploadFile(editorData.thumbnailFile, 'thumbnails')
+        try {
+          console.log('Uploading thumbnail...', editorData.thumbnailFile.name)
+          thumbnailUrl = await uploadFile(editorData.thumbnailFile, 'thumbnails')
+          console.log('Thumbnail uploaded successfully:', thumbnailUrl)
+        } catch (error) {
+          console.error('Thumbnail upload failed:', error)
+          // Continue with post creation even if thumbnail upload fails
+          toast.error('Thumbnail upload failed, but post will be created without it')
+        }
       }
 
       // Upload audio if provided  
       if (editorData.audioFile) {
-        audioUrl = await uploadFile(editorData.audioFile, 'audio')
+        try {
+          console.log('Uploading audio...', editorData.audioFile.name)
+          audioUrl = await uploadFile(editorData.audioFile, 'audio')
+          console.log('Audio uploaded successfully:', audioUrl)
+        } catch (error) {
+          console.error('Audio upload failed:', error)
+          // Continue with post creation even if audio upload fails
+          toast.error('Audio upload failed, but post will be created without it')
+        }
       }
 
       const postData: Omit<BlogPost, 'id'> = {
